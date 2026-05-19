@@ -164,6 +164,17 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .doc-body::-webkit-scrollbar{width:5px}
 .doc-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
+/* ── LETTERHEAD ── */
+.letterhead{max-width:780px;margin:0 auto 24px;padding-bottom:20px;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:16px}
+.letterhead img{height:48px;width:auto}
+.letterhead .lh-text{font-family:'Lora',serif;font-size:0.85rem;color:var(--muted);line-height:1.5}
+.letterhead .lh-company{font-size:1rem;font-weight:600;color:var(--text);letter-spacing:0.02em}
+
+@media print{
+  .letterhead{margin-bottom:16px;padding-bottom:12px}
+  .letterhead img{height:40px}
+}
+
 /* ── RENDERED DOC STYLES ── */
 .doc-content{max-width:780px;margin:0 auto}
 .doc-content p{font-size:0.9rem;line-height:1.85;color:var(--text);margin-bottom:1rem}
@@ -469,6 +480,19 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
 // ── PDF.js worker ────────────────────────────────────────────────────────
 if (window.pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ── PCG LOGO (base64 embedded) ───────────────────────────────────────────
+const PCG_LOGO_SRC = 'data:image/png;base64,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';
+
+function letterheadHTML() {
+  return `<div class="letterhead">
+    <img src="${PCG_LOGO_SRC}" alt="PCG">
+    <div class="lh-text">
+      <div class="lh-company">Pacific Construction Group</div>
+      Standard Operating Procedure
+    </div>
+  </div>`;
 }
 
 // ── FIREBASE INIT ────────────────────────────────────────────────────────
@@ -921,6 +945,9 @@ async function openDoc(id) {
   } else {
     contentEl.innerHTML = '<p style="color:var(--muted)">No content available.</p>';
   }
+
+  // Prepend letterhead to all documents
+  contentEl.insertAdjacentHTML('afterbegin', letterheadHTML());
 
   document.getElementById('docContent').closest('.doc-body').scrollTop = 0;
   renderAll();
