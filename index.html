@@ -52,11 +52,15 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .login-box input{width:100%;padding:10px 14px;background:var(--sidebar-hover);border:1px solid var(--sidebar-border);border-radius:4px;color:var(--sidebar-text);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;outline:none;transition:border-color 0.15s}
 .login-box input:focus{border-color:var(--accent)}
 .login-box input::placeholder{color:var(--sidebar-muted)}
-.login-btn{width:100%;padding:10px;background:var(--accent);border:none;border-radius:4px;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;font-weight:500;letter-spacing:0.02em;cursor:pointer;transition:background 0.15s}
+.login-btn{width:100%;padding:10px;background:var(--accent);border:none;border-radius:4px;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;font-weight:500;letter-spacing:0.02em;cursor:pointer;transition:background 0.15s;margin-top:4px}
 .login-btn:hover{background:var(--accent-light)}
+.login-btn:disabled{opacity:0.5;cursor:not-allowed}
 .login-error{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#c0392b;margin-top:12px;display:none}
+.login-info{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent-light);margin-top:12px;display:none}
 .login-glyph{font-family:'Lora',serif;font-size:3rem;color:var(--sidebar-border);margin-bottom:16px;line-height:1}
 .login-loading{display:none;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent-light);margin-top:12px}
+.login-toggle{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--sidebar-muted);margin-top:16px;cursor:pointer;text-decoration:underline;transition:color 0.15s}
+.login-toggle:hover{color:var(--accent-light)}
 
 /* ── TOPBAR ── */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;background:var(--sidebar-bg);border-bottom:1px solid var(--sidebar-border);flex-shrink:0}
@@ -68,7 +72,9 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .topbar-search .icon{color:var(--sidebar-muted);font-size:0.8rem;flex-shrink:0}
 .topbar-meta{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--sidebar-muted);text-align:right;line-height:1.7}
 .topbar-meta strong{color:var(--accent-light)}
-.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.admin-btn{background:none;border:1px solid var(--sidebar-border);border-radius:4px;padding:4px 12px;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent-light);cursor:pointer;transition:all 0.15s;display:none}
+.admin-btn:hover{border-color:var(--accent);background:var(--sidebar-hover)}
 .signout-btn{background:none;border:1px solid var(--sidebar-border);border-radius:4px;padding:4px 12px;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sidebar-muted);cursor:pointer;transition:all 0.15s}
 .signout-btn:hover{border-color:var(--accent);color:var(--accent-light)}
 
@@ -119,6 +125,13 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .empty-state h2{font-family:'Lora',serif;font-size:1.3rem;font-weight:400;font-style:italic;color:var(--muted)}
 .empty-state p{font-size:0.78rem;line-height:1.8;max-width:360px;color:var(--muted)}
 
+/* ── PENDING STATE (no dept assigned) ── */
+.pending-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;color:var(--sidebar-text);text-align:center;padding:40px;background:var(--sidebar-bg);position:fixed;inset:0;z-index:9998}
+.pending-state.hidden{display:none}
+.pending-state h2{font-family:'Lora',serif;font-size:1.3rem;font-weight:400;font-style:italic;color:var(--sidebar-text)}
+.pending-state p{font-size:0.78rem;line-height:1.8;max-width:400px;color:var(--sidebar-muted)}
+.pending-state .signout-btn{margin-top:20px}
+
 /* ── DOC PANE ── */
 .doc-pane{display:none;flex-direction:column;height:100%;overflow:hidden}
 .doc-pane.active{display:flex}
@@ -134,6 +147,14 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .meta-item{display:flex;flex-direction:column;gap:2px}
 .meta-item .ml{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)}
 .meta-item .mv{font-size:0.75rem;color:var(--text)}
+
+/* ── DOC ACTIONS (move/delete for admins) ── */
+.doc-actions{display:flex;gap:8px;margin-top:12px}
+.doc-actions button{padding:5px 12px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:all 0.15s}
+.doc-actions .move-btn{background:none;border:1px solid var(--border);color:var(--muted)}
+.doc-actions .move-btn:hover{border-color:var(--accent);color:var(--accent)}
+.doc-actions .delete-btn{background:none;border:1px solid var(--border);color:var(--muted)}
+.doc-actions .delete-btn:hover{border-color:#c0392b;color:#c0392b}
 
 /* ── DESCRIPTION STRIP ── */
 .desc-strip{background:#faf8f4;border-bottom:1px solid var(--rule);padding:12px 36px;font-size:0.78rem;line-height:1.7;color:var(--muted);font-style:italic;flex-shrink:0}
@@ -224,7 +245,7 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
 /* ── UPLOAD MODAL ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center}
 .modal-overlay.active{display:flex}
-.modal{background:var(--surface);border-radius:8px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 16px 48px rgba(0,0,0,0.2)}
+.modal{background:var(--surface);border-radius:8px;padding:28px 32px;max-width:480px;width:90%;box-shadow:0 16px 48px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto}
 .modal h3{font-family:'Lora',serif;font-size:1.1rem;color:var(--text);margin-bottom:4px}
 .modal .modal-sub{font-size:0.78rem;color:var(--muted);margin-bottom:20px}
 .modal label{display:block;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:5px;margin-top:14px}
@@ -237,19 +258,46 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
 .btn-cancel:hover{border-color:var(--text);color:var(--text)}
 .btn-save{background:var(--accent);border:none;color:#fff}
 .btn-save:hover{background:var(--accent-light)}
+.btn-save:disabled{opacity:0.5;cursor:not-allowed}
 .file-info{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 12px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .file-info .ftype{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:0.58rem;text-transform:uppercase;letter-spacing:0.05em}
+.optional-hint{font-weight:400;color:var(--border);text-transform:none;letter-spacing:0;font-size:0.55rem;margin-left:4px}
 
 /* ── DELETE BTN ── */
 .del-btn{background:none;border:none;cursor:pointer;color:var(--sidebar-border);font-size:0.65rem;padding:0 2px;flex-shrink:0;line-height:1;opacity:0;transition:all 0.15s}
 .doc-row:hover .del-btn{opacity:1}
 .del-btn:hover{color:#c0392b;transform:scale(1.15)}
 
+/* ── MOVE BTN (sidebar) ── */
+.mv-btn{background:none;border:none;cursor:pointer;color:var(--sidebar-border);font-size:0.6rem;padding:0 2px;flex-shrink:0;line-height:1;opacity:0;transition:all 0.15s}
+.doc-row:hover .mv-btn{opacity:1}
+.mv-btn:hover{color:var(--accent-light);transform:scale(1.15)}
+
 /* ── UPLOAD BTN IN SIDEBAR ── */
 .upload-row{display:flex;align-items:center;gap:8px;padding:8px 14px;margin:4px 5px;cursor:pointer;border:1px dashed var(--sidebar-border);border-radius:3px;transition:all 0.15s;justify-content:center}
 .upload-row:hover{border-color:var(--accent);background:var(--sidebar-hover)}
 .upload-row span{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--sidebar-muted);text-transform:uppercase;letter-spacing:0.1em}
 .upload-row:hover span{color:var(--accent-light)}
+
+/* ── ADMIN CONSOLE ── */
+.admin-panel{display:none;flex-direction:column;height:100%;overflow:hidden}
+.admin-panel.active{display:flex}
+.admin-panel-header{background:var(--bg);border-bottom:1px solid var(--rule);padding:20px 36px 16px;flex-shrink:0}
+.admin-panel-header h2{font-family:'Lora',serif;font-size:1.4rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.admin-panel-header p{font-size:0.78rem;color:var(--muted)}
+.admin-panel-body{flex:1;overflow-y:auto;padding:24px 36px 48px}
+.admin-user-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.admin-user-info{flex:1;min-width:180px}
+.admin-user-name{font-weight:500;font-size:0.88rem;color:var(--text)}
+.admin-user-email{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--muted)}
+.admin-user-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.admin-user-controls select{padding:6px 10px;border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:var(--text);background:var(--bg);outline:none}
+.admin-user-controls select:focus{border-color:var(--accent)}
+.admin-save-btn{padding:5px 14px;background:var(--accent);border:none;border-radius:4px;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:background 0.15s}
+.admin-save-btn:hover{background:var(--accent-light)}
+.admin-role-badge{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:0.05em;color:#fff;flex-shrink:0}
+.admin-back-btn{background:none;border:1px solid var(--border);border-radius:4px;padding:5px 14px;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);cursor:pointer;transition:all 0.15s;margin-top:8px}
+.admin-back-btn:hover{border-color:var(--accent);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -264,14 +312,32 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
       <label class="login-label" for="email-input">Email</label>
       <input type="email" id="email-input" placeholder="Enter your email" autocomplete="email">
     </div>
-    <div class="login-field">
+    <div class="login-field" id="pwd-field">
       <label class="login-label" for="pwd-input">Password</label>
       <input type="password" id="pwd-input" placeholder="Enter your password" autocomplete="current-password">
     </div>
+    <div class="login-field" id="pwd-confirm-field" style="display:none">
+      <label class="login-label" for="pwd-confirm">Confirm Password</label>
+      <input type="password" id="pwd-confirm" placeholder="Confirm your password" autocomplete="new-password">
+    </div>
+    <div class="login-field" id="name-field" style="display:none">
+      <label class="login-label" for="name-input">Your Name</label>
+      <input type="text" id="name-input" placeholder="Enter your full name" autocomplete="name">
+    </div>
     <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
-    <div class="login-loading" id="login-loading">Signing in...</div>
-    <div class="login-error" id="login-error">Incorrect email or password.</div>
+    <div class="login-loading" id="login-loading">Please wait...</div>
+    <div class="login-info" id="login-info"></div>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-toggle" id="login-toggle" onclick="toggleAuthMode()"></div>
   </div>
+</div>
+
+<!-- PENDING SCREEN (no department assigned yet) -->
+<div class="pending-state hidden" id="pending-screen">
+  <div class="login-glyph">&sect;</div>
+  <h2>Welcome to SOP Organizer</h2>
+  <p>Your account has been created. An administrator needs to assign you to a department before you can access documents. Please check back later.</p>
+  <button class="signout-btn" onclick="doLogout()">Sign Out</button>
 </div>
 
 <!-- APP -->
@@ -286,6 +352,7 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
       <div id="userInfoLabel">Construction Company</div>
       <div><strong id="docCountLabel">0 documents</strong> &middot; 5 departments</div>
     </div>
+    <button class="admin-btn" id="adminBtn" onclick="toggleAdminPanel()">Manage Users</button>
     <button class="signout-btn" onclick="doLogout()">Sign Out</button>
   </div>
 </div>
@@ -334,11 +401,25 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
           <div class="meta-item"><div class="ml">Owner</div><div class="mv" id="metaOwner">&mdash;</div></div>
           <div class="meta-item"><div class="ml">Revised</div><div class="mv" id="metaRevised">&mdash;</div></div>
         </div>
+        <div class="doc-actions" id="docActions" style="display:none">
+          <button class="move-btn" onclick="showMoveModal()">Move Department</button>
+          <button class="delete-btn" onclick="deleteCurrentDoc()">Delete Document</button>
+        </div>
       </div>
       <div class="desc-strip" id="docDesc">&mdash;</div>
       <div class="doc-body">
         <div class="doc-content" id="docContent"></div>
       </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-panel-header">
+        <h2>User Management</h2>
+        <p>Assign departments and roles for all registered users.</p>
+        <button class="admin-back-btn" onclick="toggleAdminPanel()">Back to Documents</button>
+      </div>
+      <div class="admin-panel-body" id="adminUserList"></div>
     </div>
   </div>
 </div>
@@ -352,20 +433,34 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
     <label for="uploadName">Document Name</label>
     <input type="text" id="uploadName" placeholder="e.g. Safety Inspection Checklist">
     <label for="uploadDept">Department</label>
-    <select id="uploadDept">
-      <option value="Project Management">Project Management</option>
-      <option value="Accounting">Accounting</option>
-      <option value="Human Resources">Human Resources</option>
-      <option value="Executive">Executive</option>
-      <option value="Estimating">Estimating</option>
-    </select>
-    <label for="uploadRef">Reference Code</label>
+    <select id="uploadDept"></select>
+    <label for="uploadRef">Reference Code <span class="optional-hint">(optional)</span></label>
     <input type="text" id="uploadRef" placeholder="e.g. SOP-PM-003">
     <label for="uploadDesc">Description</label>
     <textarea id="uploadDesc" placeholder="Brief description of this document..."></textarea>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeUploadModal()">Cancel</button>
       <button class="btn-save" id="modalSaveBtn" onclick="saveUploadedDoc()">Add Document</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVE MODAL -->
+<div class="modal-overlay" id="moveModal">
+  <div class="modal">
+    <h3>Move Document</h3>
+    <div class="modal-sub">Select the new department for this document.</div>
+    <label for="moveDept">New Department</label>
+    <select id="moveDept">
+      <option value="Project Management">Project Management</option>
+      <option value="Accounting">Accounting</option>
+      <option value="Human Resources">Human Resources</option>
+      <option value="Executive">Executive</option>
+      <option value="Estimating">Estimating</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeMoveModal()">Cancel</button>
+      <button class="btn-save" id="moveSaveBtn" onclick="doMoveDoc()">Move</button>
     </div>
   </div>
 </div>
@@ -391,36 +486,115 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const firestore = firebase.firestore();
 
+const ADMIN_EMAILS = ['nathan@pcgoc.com', 'sergiojr@pcgoc.com'];
+const DEPT_LIST = ['Project Management','Accounting','Human Resources','Executive','Estimating'];
+
 // ── CURRENT USER STATE ───────────────────────────────────────────────────
-let currentUser = null;     // Firebase auth user
-let currentUserProfile = null;  // { name, email, role, department } from Firestore
+let currentUser = null;
+let currentUserProfile = null;
+let authMode = 'signin'; // 'signin' or 'signup'
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
+function toggleAuthMode() {
+  if (authMode === 'signin') {
+    authMode = 'signup';
+    document.getElementById('loginBtn').textContent = 'Create Account';
+    document.getElementById('login-toggle').textContent = 'Already have an account? Sign in';
+    document.getElementById('pwd-confirm-field').style.display = '';
+    document.getElementById('name-field').style.display = '';
+    document.getElementById('pwd-input').placeholder = 'Create a password';
+  } else {
+    authMode = 'signin';
+    document.getElementById('loginBtn').textContent = 'Sign In';
+    document.getElementById('login-toggle').textContent = "Don't have an account? Create one";
+    document.getElementById('pwd-confirm-field').style.display = 'none';
+    document.getElementById('name-field').style.display = 'none';
+    document.getElementById('pwd-input').placeholder = 'Enter your password';
+  }
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-info').style.display = 'none';
+}
+
+// Show the toggle link on load
+document.getElementById('login-toggle').textContent = "Don't have an account? Create one";
+
 async function doLogin() {
   const email = document.getElementById('email-input').value.trim();
   const pwd = document.getElementById('pwd-input').value;
   const errEl = document.getElementById('login-error');
+  const infoEl = document.getElementById('login-info');
   const loadEl = document.getElementById('login-loading');
   const btn = document.getElementById('loginBtn');
 
   errEl.style.display = 'none';
+  infoEl.style.display = 'none';
+
+  if (!email) { errEl.textContent = 'Please enter your email.'; errEl.style.display = 'block'; return; }
+  if (!pwd) { errEl.textContent = 'Please enter a password.'; errEl.style.display = 'block'; return; }
+
+  if (authMode === 'signup') {
+    // Creating a new account
+    const pwdConfirm = document.getElementById('pwd-confirm').value;
+    const nameVal = document.getElementById('name-input').value.trim();
+    if (pwd !== pwdConfirm) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+    if (pwd.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+    if (!nameVal) { errEl.textContent = 'Please enter your name.'; errEl.style.display = 'block'; return; }
+
+    loadEl.style.display = 'block';
+    btn.disabled = true;
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+      // Create Firestore profile
+      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+      const profile = {
+        name: nameVal,
+        email: email,
+        role: isAdmin ? 'admin' : 'pending',
+        department: isAdmin ? 'All' : ''
+      };
+      await firestore.collection('users').doc(cred.user.uid).set(profile);
+      // onAuthStateChanged will handle entering the app
+    } catch(err) {
+      loadEl.style.display = 'none';
+      btn.disabled = false;
+      errEl.textContent = err.code === 'auth/email-already-in-use'
+        ? 'An account with this email already exists. Try signing in instead.'
+        : err.code === 'auth/invalid-email'
+        ? 'Please enter a valid email address.'
+        : err.code === 'auth/weak-password'
+        ? 'Password must be at least 6 characters.'
+        : 'Account creation failed: ' + err.message;
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  // Sign in mode
   loadEl.style.display = 'block';
   btn.disabled = true;
-
   try {
     await auth.signInWithEmailAndPassword(email, pwd);
-    // onAuthStateChanged will handle the rest
   } catch(err) {
     loadEl.style.display = 'none';
     btn.disabled = false;
-    errEl.textContent = err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
-      ? 'Incorrect email or password.'
-      : err.code === 'auth/invalid-email'
-      ? 'Please enter a valid email address.'
-      : err.code === 'auth/too-many-requests'
-      ? 'Too many attempts. Please try again later.'
-      : 'Sign in failed. Please try again.';
-    errEl.style.display = 'block';
+    if (err.code === 'auth/user-not-found') {
+      // User doesn't exist — prompt to create account
+      errEl.textContent = 'No account found with this email.';
+      errEl.style.display = 'block';
+      infoEl.textContent = 'Click below to create a new account.';
+      infoEl.style.display = 'block';
+      toggleAuthMode();
+      document.getElementById('name-input').focus();
+    } else {
+      errEl.textContent = err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
+        ? 'Incorrect password.'
+        : err.code === 'auth/invalid-email'
+        ? 'Please enter a valid email address.'
+        : err.code === 'auth/too-many-requests'
+        ? 'Too many attempts. Please try again later.'
+        : 'Sign in failed. Please try again.';
+      errEl.style.display = 'block';
+    }
   }
 }
 
@@ -436,54 +610,56 @@ function doLogout() {
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     currentUser = user;
-    // Fetch user profile from Firestore
     try {
-      const ADMIN_EMAILS = ['nathan@pcgoc.com', 'sergiojr@pcgoc.com'];
       const isAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
-
       const profileDoc = await firestore.collection('users').doc(user.uid).get();
       if (profileDoc.exists) {
         currentUserProfile = profileDoc.data();
-        // Always sync admin status based on email list
+        // Always sync admin status
         if (isAdmin && currentUserProfile.role !== 'admin') {
           currentUserProfile.role = 'admin';
           currentUserProfile.department = 'All';
           await firestore.collection('users').doc(user.uid).update({ role: 'admin', department: 'All' });
         }
       } else {
-        // Auto-create a profile on first sign-in
+        // Auto-create profile (fallback if created via Firebase console)
         currentUserProfile = {
           name: user.email.split('@')[0],
           email: user.email,
-          role: isAdmin ? 'admin' : 'department',
-          department: isAdmin ? 'All' : 'Project Management'
+          role: isAdmin ? 'admin' : 'pending',
+          department: isAdmin ? 'All' : ''
         };
         await firestore.collection('users').doc(user.uid).set(currentUserProfile);
       }
     } catch(e) {
-      // If Firestore read fails, use a fallback profile
-      const ADMIN_EMAILS_FALLBACK = ['nathan@pcgoc.com', 'sergiojr@pcgoc.com'];
-      const isAdminFallback = ADMIN_EMAILS_FALLBACK.includes(user.email.toLowerCase());
+      const isAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
       currentUserProfile = {
         name: user.email.split('@')[0],
         email: user.email,
-        role: isAdminFallback ? 'admin' : 'department',
-        department: isAdminFallback ? 'All' : 'Project Management'
+        role: isAdmin ? 'admin' : 'pending',
+        department: isAdmin ? 'All' : ''
       };
     }
+
+    // Check if user is pending (no department assigned)
+    if (currentUserProfile.role === 'pending' || (!currentUserProfile.department && currentUserProfile.role !== 'admin')) {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('pending-screen').classList.remove('hidden');
+      return;
+    }
+
     enterApp();
   } else {
-    // Not signed in — show login
     document.getElementById('login-screen').classList.remove('hidden');
   }
 });
 
-// Enter key on password field
 document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('email-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pwd-input').focus(); });
 
 function enterApp() {
   document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('pending-screen').classList.add('hidden');
   document.getElementById('login-loading').style.display = 'none';
   document.getElementById('loginBtn').disabled = false;
 
@@ -494,14 +670,28 @@ function enterApp() {
     label.textContent = currentUserProfile.name + ' — ' + roleLabel;
   }
 
-  // Restrict upload for department users to their dept only
-  if (currentUserProfile && currentUserProfile.role !== 'admin') {
-    const sel = document.getElementById('uploadDept');
-    sel.innerHTML = `<option value="${currentUserProfile.department}">${currentUserProfile.department}</option>`;
+  // Show admin button for admins
+  if (currentUserProfile && currentUserProfile.role === 'admin') {
+    document.getElementById('adminBtn').style.display = '';
   }
+
+  // Populate upload department dropdown
+  populateUploadDeptDropdown();
 
   loadFavs();
   loadDocuments();
+}
+
+function populateUploadDeptDropdown() {
+  const sel = document.getElementById('uploadDept');
+  sel.innerHTML = '';
+  if (currentUserProfile && currentUserProfile.role === 'admin') {
+    DEPT_LIST.forEach(d => {
+      sel.innerHTML += `<option value="${d}">${d}</option>`;
+    });
+  } else if (currentUserProfile && currentUserProfile.department) {
+    sel.innerHTML = `<option value="${currentUserProfile.department}">${currentUserProfile.department}</option>`;
+  }
 }
 
 // ── FIRESTORE DOCUMENTS ─────────────────────────────────────────────────
@@ -513,7 +703,6 @@ async function loadDocuments() {
     allDocs = [];
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
-      // Store metadata only (skip fileData to save memory)
       allDocs.push({
         id: docSnap.id,
         name: data.name,
@@ -537,7 +726,6 @@ async function loadDocuments() {
 function getVisibleDocs() {
   if (!currentUserProfile) return [];
   if (currentUserProfile.role === 'admin') return allDocs;
-  // Department users only see their department
   return allDocs.filter(d => d.dept === currentUserProfile.department);
 }
 
@@ -585,7 +773,6 @@ function renderAll() {
 
 function updateDocCount() {
   const visible = getVisibleDocs();
-  const depts = new Set(visible.map(d => d.dept));
   document.getElementById('docCountLabel').textContent = `${visible.length} document${visible.length !== 1 ? 's' : ''}`;
 }
 
@@ -635,10 +822,10 @@ function renderTree() {
     document.getElementById('docCountLabel').textContent = `${filtered.length} of ${visible.length} docs`;
   }
 
-  const deptOrder = ['Project Management','Accounting','Human Resources','Executive','Estimating'];
   const depts = grouped(filtered);
-  const names = deptOrder.filter(d => depts[d]);
+  const names = DEPT_LIST.filter(d => depts[d]);
   const tree = document.getElementById('tree');
+  const isAdmin = currentUserProfile && currentUserProfile.role === 'admin';
 
   tree.innerHTML = names.map(dept => {
     const cls = deptClass(dept);
@@ -655,7 +842,7 @@ function renderTree() {
       </div>
       <div class="doc-list ${open?'open':''}">
         ${items.map(d => {
-          const canDelete = currentUserProfile && (currentUserProfile.role === 'admin' || d.uploadedBy === (currentUser && currentUser.uid));
+          const canDelete = isAdmin || d.uploadedBy === (currentUser && currentUser.uid);
           return `
           <div class="doc-row ${d.id===activeId?'active':''}" onclick="openDoc('${d.id}')">
             <div class="doc-row-left">
@@ -687,6 +874,9 @@ function highlight(text, term) {
 
 // ── OPEN DOC ─────────────────────────────────────────────────────────────
 async function openDoc(id) {
+  // Hide admin panel if visible
+  document.getElementById('adminPanel').classList.remove('active');
+
   activeId = id;
   const doc = allDocs.find(d => d.id === id);
   if (!doc) return;
@@ -708,15 +898,16 @@ async function openDoc(id) {
   document.getElementById('metaRevised').textContent = doc.revised || '—';
   document.getElementById('docDesc').textContent = doc.desc || '';
 
+  // Show admin doc actions
+  const isAdmin = currentUserProfile && currentUserProfile.role === 'admin';
+  document.getElementById('docActions').style.display = isAdmin ? 'flex' : 'none';
+
   updateHeaderStar(doc.id);
 
-  // Render content — fetch full doc with fileData from Firestore
   const contentEl = document.getElementById('docContent');
-
   if (doc.fileType) {
     contentEl.innerHTML = '<div class="pdf-loading">Loading document...</div>';
     try {
-      // Fetch the full document (including fileData) from Firestore
       const fullSnap = await firestore.collection('documents').doc(id).get();
       if (fullSnap.exists) {
         const fullDoc = { id: fullSnap.id, ...fullSnap.data() };
@@ -845,27 +1036,12 @@ const mainArea = document.getElementById('mainArea');
 const dropOverlay = document.getElementById('dropOverlay');
 let dragCounter = 0;
 
-mainArea.addEventListener('dragenter', (e) => {
-  e.preventDefault();
-  dragCounter++;
-  dropOverlay.classList.add('active');
-});
-
-mainArea.addEventListener('dragleave', (e) => {
-  e.preventDefault();
-  dragCounter--;
-  if (dragCounter <= 0) { dragCounter = 0; dropOverlay.classList.remove('active'); }
-});
-
+mainArea.addEventListener('dragenter', (e) => { e.preventDefault(); dragCounter++; dropOverlay.classList.add('active'); });
+mainArea.addEventListener('dragleave', (e) => { e.preventDefault(); dragCounter--; if (dragCounter <= 0) { dragCounter = 0; dropOverlay.classList.remove('active'); } });
 mainArea.addEventListener('dragover', (e) => { e.preventDefault(); });
-
 mainArea.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dragCounter = 0;
-  dropOverlay.classList.remove('active');
-  if (e.dataTransfer.files.length) {
-    handleFileSelect(e.dataTransfer.files);
-  }
+  e.preventDefault(); dragCounter = 0; dropOverlay.classList.remove('active');
+  if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files);
 });
 
 // ── FILE UPLOAD ──────────────────────────────────────────────────────────
@@ -893,11 +1069,20 @@ function showUploadModal(file) {
   document.getElementById('uploadRef').value = '';
   document.getElementById('uploadDesc').value = '';
 
+  // Re-populate dropdown each time to ensure correct options
+  populateUploadDeptDropdown();
+
+  // Try to auto-detect department from filename
+  const fnLower = file.name.toLowerCase();
+  DEPT_LIST.forEach(d => {
+    if (fnLower.includes(d.toLowerCase().split(' ')[0].toLowerCase())) {
+      document.getElementById('uploadDept').value = d;
+    }
+  });
+
   if (pendingFiles.length > 1) {
-    document.getElementById('modalFileInfo').textContent =
-      `File ${currentFileIndex + 1} of ${pendingFiles.length}`;
-    document.getElementById('modalSaveBtn').textContent =
-      currentFileIndex < pendingFiles.length - 1 ? 'Add & Next' : 'Add Document';
+    document.getElementById('modalFileInfo').textContent = `File ${currentFileIndex + 1} of ${pendingFiles.length}`;
+    document.getElementById('modalSaveBtn').textContent = currentFileIndex < pendingFiles.length - 1 ? 'Add & Next' : 'Add Document';
   } else {
     document.getElementById('modalFileInfo').textContent = 'Configure your document before adding it to the library.';
     document.getElementById('modalSaveBtn').textContent = 'Add Document';
@@ -928,23 +1113,18 @@ async function saveUploadedDoc() {
   saveBtn.textContent = 'Uploading...';
 
   try {
-    // Read file as base64
     const fileData = await readFileAsBase64(file);
 
-    // Check size — Firestore docs max ~1MB, base64 adds ~33% overhead
-    // So we limit raw file size to roughly 700KB
     if (file.size > 700 * 1024) {
-      alert('File too large. Maximum file size is about 700 KB for direct storage. Consider compressing the file first.');
+      alert('File too large. Maximum file size is about 700 KB. Consider compressing the file first.');
       saveBtn.disabled = false;
       saveBtn.textContent = 'Add Document';
       return;
     }
 
-    // Create a unique document ID
     const docRef = firestore.collection('documents').doc();
     const docId = docRef.id;
 
-    // Save metadata + file data to Firestore
     const docData = {
       name,
       dept,
@@ -961,11 +1141,9 @@ async function saveUploadedDoc() {
 
     await docRef.set(docData);
 
-    // Add to local array
-    allDocs.push({ id: docId, ...docData });
+    allDocs.push({ id: docId, name, dept, owner: docData.owner, ref, revised: docData.revised, desc, fileType: file.type, fileName: file.name, uploadedBy: currentUser.uid });
     renderAll();
 
-    // Handle multi-file
     currentFileIndex++;
     if (currentFileIndex < pendingFiles.length) {
       saveBtn.disabled = false;
@@ -984,16 +1162,11 @@ async function saveUploadedDoc() {
 
 // ── DELETE DOC ───────────────────────────────────────────────────────────
 async function deleteDoc(e, id) {
-  e.stopPropagation();
+  if (e) e.stopPropagation();
   if (!confirm('Remove this document? This cannot be undone.')) return;
 
-  const doc = allDocs.find(d => d.id === id);
-
   try {
-    // Delete from Firestore
     await firestore.collection('documents').doc(id).delete();
-
-    // Remove from local array
     allDocs = allDocs.filter(d => d.id !== id);
     favorites.delete(id);
     saveFavs();
@@ -1010,13 +1183,132 @@ async function deleteDoc(e, id) {
   }
 }
 
+function deleteCurrentDoc() {
+  if (activeId) deleteDoc(null, activeId);
+}
+
+// ── MOVE DOC ─────────────────────────────────────────────────────────────
+function showMoveModal() {
+  if (!activeId) return;
+  const doc = allDocs.find(d => d.id === activeId);
+  if (!doc) return;
+  document.getElementById('moveDept').value = doc.dept;
+  document.getElementById('moveModal').classList.add('active');
+}
+
+function closeMoveModal() {
+  document.getElementById('moveModal').classList.remove('active');
+}
+
+async function doMoveDoc() {
+  if (!activeId) return;
+  const newDept = document.getElementById('moveDept').value;
+  const btn = document.getElementById('moveSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Moving...';
+
+  try {
+    await firestore.collection('documents').doc(activeId).update({ dept: newDept });
+    const doc = allDocs.find(d => d.id === activeId);
+    if (doc) doc.dept = newDept;
+    closeMoveModal();
+    openDoc(activeId);
+  } catch(err) {
+    alert('Move failed: ' + err.message);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Move';
+}
+
+// ── ADMIN CONSOLE ───────────────────────────────────────────────────────
+let adminPanelOpen = false;
+
+function toggleAdminPanel() {
+  adminPanelOpen = !adminPanelOpen;
+  const panel = document.getElementById('adminPanel');
+  const docPane = document.getElementById('docPane');
+  const emptyState = document.getElementById('emptyState');
+
+  if (adminPanelOpen) {
+    panel.classList.add('active');
+    docPane.classList.remove('active');
+    emptyState.style.display = 'none';
+    loadAdminUsers();
+  } else {
+    panel.classList.remove('active');
+    if (activeId) {
+      docPane.classList.add('active');
+    } else {
+      emptyState.style.display = '';
+    }
+  }
+}
+
+async function loadAdminUsers() {
+  const container = document.getElementById('adminUserList');
+  container.innerHTML = '<div class="pdf-loading">Loading users...</div>';
+
+  try {
+    const snapshot = await firestore.collection('users').orderBy('name').get();
+    const users = [];
+    snapshot.forEach(doc => { users.push({ uid: doc.id, ...doc.data() }); });
+
+    container.innerHTML = users.map(u => {
+      const roleBg = u.role === 'admin' ? 'var(--accent)' : u.role === 'pending' ? '#999' : 'var(--accent2)';
+      const roleLabel = u.role === 'admin' ? 'Admin' : u.role === 'pending' ? 'Pending' : 'Dept User';
+      return `<div class="admin-user-card">
+        <div class="admin-user-info">
+          <div class="admin-user-name">${escapeHtml(u.name || 'Unknown')}</div>
+          <div class="admin-user-email">${escapeHtml(u.email || '')}</div>
+        </div>
+        <span class="admin-role-badge" style="background:${roleBg}">${roleLabel}</span>
+        <div class="admin-user-controls">
+          <select id="adminRole_${u.uid}">
+            <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+            <option value="department" ${u.role==='department'?'selected':''}>Department User</option>
+            <option value="pending" ${u.role==='pending'?'selected':''}>Pending</option>
+          </select>
+          <select id="adminDept_${u.uid}">
+            <option value="" ${!u.department || u.department==='All' || u.department===''?'selected':''}>All / None</option>
+            ${DEPT_LIST.map(d => `<option value="${d}" ${u.department===d?'selected':''}>${d}</option>`).join('')}
+          </select>
+          <button class="admin-save-btn" onclick="saveUserRole('${u.uid}')">Save</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(err) {
+    container.innerHTML = `<p style="color:#c0392b">Error loading users: ${err.message}</p>`;
+  }
+}
+
+async function saveUserRole(uid) {
+  const role = document.getElementById('adminRole_' + uid).value;
+  const dept = document.getElementById('adminDept_' + uid).value;
+
+  const update = { role };
+  if (role === 'admin') {
+    update.department = 'All';
+  } else if (dept) {
+    update.department = dept;
+  } else {
+    update.department = '';
+  }
+
+  try {
+    await firestore.collection('users').doc(uid).update(update);
+    loadAdminUsers(); // Refresh the list
+  } catch(err) {
+    alert('Failed to update user: ' + err.message);
+  }
+}
+
 // ── RESIZE SIDEBAR ───────────────────────────────────────────────────────
 const handle = document.getElementById('resizeHandle');
 const sidebarEl = document.getElementById('sidebar');
-let drag=false, sx, sw;
-handle.addEventListener('mousedown', e => { drag=true; sx=e.clientX; sw=sidebarEl.offsetWidth; document.body.style.cssText='cursor:col-resize;user-select:none'; });
-document.addEventListener('mousemove', e => { if (!drag) return; sidebarEl.style.width = Math.max(160, Math.min(420, sw+e.clientX-sx))+'px'; });
-document.addEventListener('mouseup', () => { drag=false; document.body.style.cssText=''; });
+let rdrag=false, rsx, rsw;
+handle.addEventListener('mousedown', e => { rdrag=true; rsx=e.clientX; rsw=sidebarEl.offsetWidth; document.body.style.cssText='cursor:col-resize;user-select:none'; });
+document.addEventListener('mousemove', e => { if (!rdrag) return; sidebarEl.style.width = Math.max(160, Math.min(420, rsw+e.clientX-rsx))+'px'; });
+document.addEventListener('mouseup', () => { rdrag=false; document.body.style.cssText=''; });
 </script>
 </body>
 </html>
