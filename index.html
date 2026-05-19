@@ -442,12 +442,15 @@ auth.onAuthStateChanged(async (user) => {
       if (profileDoc.exists) {
         currentUserProfile = profileDoc.data();
       } else {
-        // Auto-create a basic profile if none exists (admin can update later)
+        // Auto-create a profile if none exists
+        // Admin emails get admin role automatically
+        const ADMIN_EMAILS = ['nathan@pcgoc.com', 'sergiolopez1327@gmail.com'];
+        const isAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
         currentUserProfile = {
           name: user.email.split('@')[0],
           email: user.email,
-          role: 'department',
-          department: 'Project Management'
+          role: isAdmin ? 'admin' : 'department',
+          department: isAdmin ? 'All' : 'Project Management'
         };
         await firestore.collection('users').doc(user.uid).set(currentUserProfile);
       }
