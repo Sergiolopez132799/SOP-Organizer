@@ -7,6 +7,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- Firebase SDKs (compat mode for simplicity in a single-file app) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -51,6 +56,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .login-btn:hover{background:var(--accent-light)}
 .login-error{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#c0392b;margin-top:12px;display:none}
 .login-glyph{font-family:'Lora',serif;font-size:3rem;color:var(--sidebar-border);margin-bottom:16px;line-height:1}
+.login-loading{display:none;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent-light);margin-top:12px}
 
 /* ── TOPBAR ── */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;background:var(--sidebar-bg);border-bottom:1px solid var(--sidebar-border);flex-shrink:0}
@@ -255,11 +261,16 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
     <div class="brand-lg">SOP Organizer</div>
     <div class="login-sub">Standard Operating Procedures</div>
     <div class="login-field">
-      <label class="login-label" for="pwd-input">Password</label>
-      <input type="password" id="pwd-input" placeholder="Enter access password" autocomplete="off">
+      <label class="login-label" for="email-input">Email</label>
+      <input type="email" id="email-input" placeholder="Enter your email" autocomplete="email">
     </div>
-    <button class="login-btn" onclick="checkPassword()">Sign In</button>
-    <div class="login-error" id="login-error">Incorrect password. Please try again.</div>
+    <div class="login-field">
+      <label class="login-label" for="pwd-input">Password</label>
+      <input type="password" id="pwd-input" placeholder="Enter your password" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="login-loading" id="login-loading">Signing in...</div>
+    <div class="login-error" id="login-error">Incorrect email or password.</div>
   </div>
 </div>
 
@@ -267,15 +278,15 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
 <div class="topbar">
   <div class="brand">SOP Organizer</div>
   <div class="topbar-search">
-    <span class="icon">&x2315;</span>
+    <span class="icon">&#x2315;</span>
     <input type="text" id="searchInput" placeholder="Search documents..." oninput="onSearch()">
   </div>
   <div class="topbar-right">
     <div class="topbar-meta">
-      <div>Construction Company</div>
-      <div><strong id="docCountLabel">10 documents</strong> &middot; 5 departments</div>
+      <div id="userInfoLabel">Construction Company</div>
+      <div><strong id="docCountLabel">0 documents</strong> &middot; 5 departments</div>
     </div>
-    <button class="signout-btn" onclick="logout()">Sign Out</button>
+    <button class="signout-btn" onclick="doLogout()">Sign Out</button>
   </div>
 </div>
 
@@ -287,7 +298,7 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
     </div>
     <div class="sidebar-label">Standard Operating Procedures</div>
     <div class="tree" id="tree"></div>
-    <div class="upload-row" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-row" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
       <span>+ Upload Document</span>
     </div>
     <input type="file" id="fileInput" style="display:none" multiple accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.gif,.bmp,.webp,.html,.htm,.txt" onchange="handleFileSelect(this.files)">
@@ -365,117 +376,146 @@ if (window.pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
+// ── FIREBASE INIT ────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBBo7mj088my-UrImjXvGrn9CAfpcXOC7k",
+  authDomain: "sop-organizer.firebaseapp.com",
+  projectId: "sop-organizer",
+  storageBucket: "sop-organizer.firebasestorage.app",
+  messagingSenderId: "452301586566",
+  appId: "1:452301586566:web:3b3c32359314c4c5125107",
+  measurementId: "G-H135FTFECN"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const firestore = firebase.firestore();
+const storage = firebase.storage();
+
+// ── CURRENT USER STATE ───────────────────────────────────────────────────
+let currentUser = null;     // Firebase auth user
+let currentUserProfile = null;  // { name, email, role, department } from Firestore
+
 // ── AUTH ──────────────────────────────────────────────────────────────────
-const PASSWORD_HASH = "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8";
-
-async function sha1(str) {
-  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-async function checkPassword() {
+async function doLogin() {
+  const email = document.getElementById('email-input').value.trim();
   const pwd = document.getElementById('pwd-input').value;
-  const hash = await sha1(pwd);
-  if (hash === PASSWORD_HASH) {
-    sessionStorage.setItem('sop_auth', '1');
-    enterApp();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('pwd-input').value = '';
-    document.getElementById('pwd-input').focus();
+  const errEl = document.getElementById('login-error');
+  const loadEl = document.getElementById('login-loading');
+  const btn = document.getElementById('loginBtn');
+
+  errEl.style.display = 'none';
+  loadEl.style.display = 'block';
+  btn.disabled = true;
+
+  try {
+    await auth.signInWithEmailAndPassword(email, pwd);
+    // onAuthStateChanged will handle the rest
+  } catch(err) {
+    loadEl.style.display = 'none';
+    btn.disabled = false;
+    errEl.textContent = err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
+      ? 'Incorrect email or password.'
+      : err.code === 'auth/invalid-email'
+      ? 'Please enter a valid email address.'
+      : err.code === 'auth/too-many-requests'
+      ? 'Too many attempts. Please try again later.'
+      : 'Sign in failed. Please try again.';
+    errEl.style.display = 'block';
   }
 }
 
-document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+function doLogout() {
+  auth.signOut().then(() => {
+    currentUser = null;
+    currentUserProfile = null;
+    location.reload();
+  });
+}
 
-function logout() { sessionStorage.removeItem('sop_auth'); location.reload(); }
+// Listen for auth state
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    currentUser = user;
+    // Fetch user profile from Firestore
+    try {
+      const profileDoc = await firestore.collection('users').doc(user.uid).get();
+      if (profileDoc.exists) {
+        currentUserProfile = profileDoc.data();
+      } else {
+        // Auto-create a basic profile if none exists (admin can update later)
+        currentUserProfile = {
+          name: user.email.split('@')[0],
+          email: user.email,
+          role: 'department',
+          department: 'Project Management'
+        };
+        await firestore.collection('users').doc(user.uid).set(currentUserProfile);
+      }
+    } catch(e) {
+      // If Firestore read fails, use a fallback profile
+      currentUserProfile = {
+        name: user.email.split('@')[0],
+        email: user.email,
+        role: 'department',
+        department: 'Project Management'
+      };
+    }
+    enterApp();
+  } else {
+    // Not signed in — show login
+    document.getElementById('login-screen').classList.remove('hidden');
+  }
+});
+
+// Enter key on password field
+document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('email-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pwd-input').focus(); });
 
 function enterApp() {
   document.getElementById('login-screen').classList.add('hidden');
-  initDB().then(() => { loadFavs(); loadUploaded().then(() => renderAll()); });
+  document.getElementById('login-loading').style.display = 'none';
+  document.getElementById('loginBtn').disabled = false;
+
+  // Update topbar with user info
+  const label = document.getElementById('userInfoLabel');
+  if (currentUserProfile) {
+    const roleLabel = currentUserProfile.role === 'admin' ? 'Admin' : currentUserProfile.department;
+    label.textContent = currentUserProfile.name + ' — ' + roleLabel;
+  }
+
+  // Restrict upload for department users to their dept only
+  if (currentUserProfile && currentUserProfile.role !== 'admin') {
+    const sel = document.getElementById('uploadDept');
+    sel.innerHTML = `<option value="${currentUserProfile.department}">${currentUserProfile.department}</option>`;
+  }
+
+  loadFavs();
+  loadDocuments();
 }
 
-if (sessionStorage.getItem('sop_auth')) enterApp();
+// ── FIRESTORE DOCUMENTS ─────────────────────────────────────────────────
+let allDocs = [];
 
-// ── INDEXEDDB ────────────────────────────────────────────────────────────
-let db = null;
-const DB_NAME = 'SOPOrganizerDB';
-const DB_VERSION = 1;
-
-function initDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains('documents')) {
-        d.createObjectStore('documents', { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = (e) => { db = e.target.result; resolve(); };
-    req.onerror = () => reject();
-  });
+async function loadDocuments() {
+  try {
+    const snapshot = await firestore.collection('documents').orderBy('name').get();
+    allDocs = [];
+    snapshot.forEach(doc => {
+      allDocs.push({ id: doc.id, ...doc.data() });
+    });
+  } catch(e) {
+    console.error('Error loading documents:', e);
+    allDocs = [];
+  }
+  renderAll();
 }
 
-function dbPut(doc) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('documents', 'readwrite');
-    tx.objectStore('documents').put(doc);
-    tx.oncomplete = resolve;
-    tx.onerror = reject;
-  });
-}
-
-function dbDelete(id) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('documents', 'readwrite');
-    tx.objectStore('documents').delete(id);
-    tx.oncomplete = resolve;
-    tx.onerror = reject;
-  });
-}
-
-function dbGetAll() {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('documents', 'readonly');
-    const req = tx.objectStore('documents').getAll();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = reject;
-  });
-}
-
-function dbGet(id) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('documents', 'readonly');
-    const req = tx.objectStore('documents').get(id);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = reject;
-  });
-}
-
-// ── BUILT-IN DATA ────────────────────────────────────────────────────────
-const BUILTIN_DOCS = [];
-
-// ── MERGED DATA ──────────────────────────────────────────────────────────
-let uploadedDocs = [];
-function getAllDocs() { return [...BUILTIN_DOCS, ...uploadedDocs]; }
-
-async function loadUploaded() {
-  if (!db) return;
-  const all = await dbGetAll();
-  uploadedDocs = all.map(d => ({
-    id: d.id,
-    dept: d.dept,
-    name: d.name,
-    owner: d.owner || 'Uploaded',
-    ref: d.ref || '',
-    revised: d.revised || new Date().toISOString().slice(0,10),
-    desc: d.desc || '',
-    html: d.html || '',
-    uploaded: true,
-    fileType: d.fileType,
-    fileData: d.fileData,
-    fileName: d.fileName
-  }));
+function getVisibleDocs() {
+  if (!currentUserProfile) return [];
+  if (currentUserProfile.role === 'admin') return allDocs;
+  // Department users only see their department
+  return allDocs.filter(d => d.dept === currentUserProfile.department);
 }
 
 // ── DEPT CONFIG ──────────────────────────────────────────────────────────
@@ -503,7 +543,6 @@ function deptIcon(dept) { return DEPT_ICONS[dept] || ''; }
 
 // ── STATE ────────────────────────────────────────────────────────────────
 let activeId = null;
-let activeIsUploaded = false;
 let searchTerm = '';
 let favorites = new Set();
 const FAV_KEY = 'sop-organizer-favorites';
@@ -522,23 +561,23 @@ function renderAll() {
 }
 
 function updateDocCount() {
-  const all = getAllDocs();
-  const depts = new Set(all.map(d => d.dept));
-  document.getElementById('docCountLabel').textContent = `${all.length} documents`;
+  const visible = getVisibleDocs();
+  const depts = new Set(visible.map(d => d.dept));
+  document.getElementById('docCountLabel').textContent = `${visible.length} document${visible.length !== 1 ? 's' : ''}`;
 }
 
 // ── FAVORITES ────────────────────────────────────────────────────────────
 function renderFavs() {
   const section = document.getElementById('favSection');
   const list = document.getElementById('favList');
-  const all = getAllDocs();
-  const favDocs = all.filter(d => favorites.has(d.id));
+  const visible = getVisibleDocs();
+  const favDocs = visible.filter(d => favorites.has(d.id));
   section.classList.toggle('empty', favDocs.length === 0);
   list.innerHTML = favDocs.map(d => `
-    <div class="fav-row ${d.id===activeId?'active':''}" onclick="openDoc(${typeof d.id === 'string' ? "'"+d.id+"'" : d.id})">
+    <div class="fav-row ${d.id===activeId?'active':''}" onclick="openDoc('${d.id}')">
       <div class="fav-dept-pip" style="background:${deptColor(d.dept)}"></div>
-      <span class="fav-name">${d.name}</span>
-      <button class="fav-unstar" onclick="toggleFav(event,${typeof d.id === 'string' ? "'"+d.id+"'" : d.id})" title="Remove from favorites">&starf;</button>
+      <span class="fav-name">${escapeHtml(d.name)}</span>
+      <button class="fav-unstar" onclick="toggleFav(event,'${d.id}')" title="Remove from favorites">&starf;</button>
     </div>`).join('');
 }
 
@@ -560,18 +599,17 @@ function grouped(docs) {
 
 function renderTree() {
   const term = searchTerm.toLowerCase();
-  const all = getAllDocs();
+  const visible = getVisibleDocs();
   const filtered = term
-    ? all.filter(d =>
+    ? visible.filter(d =>
         d.name.toLowerCase().includes(term) ||
         d.dept.toLowerCase().includes(term) ||
-        d.desc.toLowerCase().includes(term) ||
-        (d.html && d.html.toLowerCase().includes(term))
+        (d.desc && d.desc.toLowerCase().includes(term))
       )
-    : all;
+    : visible;
 
   if (term) {
-    document.getElementById('docCountLabel').textContent = `${filtered.length} of ${all.length} docs`;
+    document.getElementById('docCountLabel').textContent = `${filtered.length} of ${visible.length} docs`;
   }
 
   const deptOrder = ['Project Management','Accounting','Human Resources','Executive','Estimating'];
@@ -594,15 +632,15 @@ function renderTree() {
       </div>
       <div class="doc-list ${open?'open':''}">
         ${items.map(d => {
-          const idArg = typeof d.id === 'string' ? "'"+d.id+"'" : d.id;
+          const canDelete = currentUserProfile && (currentUserProfile.role === 'admin' || d.uploadedBy === (currentUser && currentUser.uid));
           return `
-          <div class="doc-row ${d.id===activeId?'active':''}" onclick="openDoc(${idArg})">
+          <div class="doc-row ${d.id===activeId?'active':''}" onclick="openDoc('${d.id}')">
             <div class="doc-row-left">
-              <span class="doc-name">${term ? highlight(d.name, term) : d.name}${d.uploaded ? ' <span style="color:var(--accent);font-size:0.55rem;vertical-align:middle">&#9679;</span>' : ''}</span>
+              <span class="doc-name">${term ? highlight(d.name, term) : escapeHtml(d.name)}</span>
             </div>
-            ${d.uploaded ? `<button class="del-btn" onclick="deleteDoc(event,${idArg})" title="Remove document">&times;</button>` : ''}
+            ${canDelete ? `<button class="del-btn" onclick="deleteDoc(event,'${d.id}')" title="Remove document">&times;</button>` : ''}
             <button class="star-btn ${favorites.has(d.id)?'starred':''}"
-              onclick="toggleFav(event,${idArg})"
+              onclick="toggleFav(event,'${d.id}')"
               title="${favorites.has(d.id)?'Remove from favorites':'Add to favorites'}"
             >${favorites.has(d.id)?'&starf;':'&star;'}</button>
           </div>`;
@@ -619,24 +657,15 @@ function toggleDept(row) {
 
 function highlight(text, term) {
   if (!term) return text;
+  const safe = escapeHtml(text);
   const re = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
-  return text.replace(re, '<mark>$1</mark>');
+  return safe.replace(re, '<mark>$1</mark>');
 }
 
 // ── OPEN DOC ─────────────────────────────────────────────────────────────
 async function openDoc(id) {
   activeId = id;
-  const all = getAllDocs();
-  let doc = all.find(d => d.id === id);
-
-  // For uploaded docs, get fresh data from DB for file content
-  if (doc && doc.uploaded) {
-    const dbDoc = await dbGet(id);
-    if (dbDoc) {
-      doc = { ...doc, fileData: dbDoc.fileData, fileType: dbDoc.fileType, fileName: dbDoc.fileName, html: dbDoc.html };
-    }
-  }
-
+  const doc = allDocs.find(d => d.id === id);
   if (!doc) return;
 
   document.getElementById('emptyState').style.display = 'none';
@@ -658,24 +687,42 @@ async function openDoc(id) {
 
   updateHeaderStar(doc.id);
 
-  // Render content based on type
+  // Render content — download file from Firebase Storage
   const contentEl = document.getElementById('docContent');
 
-  if (doc.uploaded && doc.fileData) {
-    await renderUploadedDoc(doc, contentEl);
+  if (doc.storagePath) {
+    contentEl.innerHTML = '<div class="pdf-loading">Loading document...</div>';
+    try {
+      const url = await storage.ref(doc.storagePath).getDownloadURL();
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const base64 = arrayBufferToBase64(arrayBuffer);
+      await renderUploadedDoc({ ...doc, fileData: base64 }, contentEl);
+    } catch(err) {
+      contentEl.innerHTML = `<p style="color:#c0392b">Error loading document: ${err.message}</p>`;
+    }
   } else {
-    contentEl.innerHTML = doc.html || '<p style="color:var(--muted)">No content available.</p>';
+    contentEl.innerHTML = '<p style="color:var(--muted)">No content available.</p>';
   }
 
   document.getElementById('docContent').closest('.doc-body').scrollTop = 0;
   renderAll();
 }
 
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 async function renderUploadedDoc(doc, el) {
   const type = doc.fileType || '';
 
   if (type === 'application/pdf' || (doc.fileName && doc.fileName.endsWith('.pdf'))) {
-    // PDF rendering
     el.innerHTML = '<div class="pdf-viewer"><div class="pdf-loading">Loading PDF...</div></div>';
     try {
       const data = base64ToUint8(doc.fileData);
@@ -700,10 +747,8 @@ async function renderUploadedDoc(doc, el) {
       el.innerHTML = `<p style="color:#c0392b">Error rendering PDF: ${err.message}</p>`;
     }
   } else if (type.startsWith('image/')) {
-    // Image rendering
-    el.innerHTML = `<div class="img-viewer"><img src="data:${type};base64,${doc.fileData}" alt="${doc.name}"></div>`;
+    el.innerHTML = `<div class="img-viewer"><img src="data:${type};base64,${doc.fileData}" alt="${escapeHtml(doc.name)}"></div>`;
   } else if (type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (doc.fileName && doc.fileName.endsWith('.docx'))) {
-    // DOCX rendering via mammoth
     try {
       const data = base64ToUint8(doc.fileData);
       const result = await mammoth.convertToHtml({ arrayBuffer: data.buffer }, {
@@ -718,14 +763,12 @@ async function renderUploadedDoc(doc, el) {
       el.innerHTML = `<p style="color:#c0392b">Error rendering DOCX: ${err.message}</p>`;
     }
   } else if (type === 'text/html' || (doc.fileName && (doc.fileName.endsWith('.html') || doc.fileName.endsWith('.htm')))) {
-    // HTML
     try {
       el.innerHTML = atob(doc.fileData);
     } catch(err) {
       el.innerHTML = '<p style="color:#c0392b">Error rendering HTML file.</p>';
     }
   } else if (type.startsWith('text/') || (doc.fileName && doc.fileName.endsWith('.txt'))) {
-    // Plain text
     try {
       const text = atob(doc.fileData);
       el.innerHTML = '<pre style="white-space:pre-wrap;font-family:IBM Plex Mono,monospace;font-size:0.85rem;line-height:1.7;color:var(--text)">' + escapeHtml(text) + '</pre>';
@@ -733,7 +776,7 @@ async function renderUploadedDoc(doc, el) {
       el.innerHTML = '<p style="color:#c0392b">Error rendering text file.</p>';
     }
   } else {
-    el.innerHTML = doc.html || '<p style="color:var(--muted)">This file type cannot be previewed. Supported formats: PDF, DOCX, images, HTML, and text files.</p>';
+    el.innerHTML = '<p style="color:var(--muted)">This file type cannot be previewed. Supported formats: PDF, DOCX, images, HTML, and text files.</p>';
   }
 }
 
@@ -745,7 +788,7 @@ function base64ToUint8(b64) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── HEADER STAR ──────────────────────────────────────────────────────────
@@ -805,6 +848,7 @@ let pendingFiles = [];
 let currentFileIndex = 0;
 
 function handleFileSelect(files) {
+  if (!currentUser) return;
   pendingFiles = Array.from(files);
   currentFileIndex = 0;
   if (pendingFiles.length > 0) showUploadModal(pendingFiles[0]);
@@ -817,7 +861,7 @@ function showUploadModal(file) {
     : (file.size/(1024*1024)).toFixed(1) + ' MB';
 
   document.getElementById('modalFilePreview').innerHTML =
-    `<span class="ftype">${ext}</span> ${file.name} <span style="margin-left:auto">${size}</span>`;
+    `<span class="ftype">${ext}</span> ${escapeHtml(file.name)} <span style="margin-left:auto">${size}</span>`;
 
   const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
   document.getElementById('uploadName').value = baseName;
@@ -854,68 +898,94 @@ async function saveUploadedDoc() {
   const ref = document.getElementById('uploadRef').value.trim();
   const desc = document.getElementById('uploadDesc').value.trim();
 
-  // Read file as base64
-  const fileData = await readFileAsBase64(file);
-  const id = 'upload_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+  const saveBtn = document.getElementById('modalSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Uploading...';
 
-  const doc = {
-    id,
-    dept,
-    name,
-    owner: 'Uploaded',
-    ref,
-    revised: new Date().toISOString().slice(0,10),
-    desc,
-    html: '',
-    fileType: file.type,
-    fileData,
-    fileName: file.name,
-    uploaded: true
-  };
+  try {
+    // Create a unique document ID
+    const docRef = firestore.collection('documents').doc();
+    const docId = docRef.id;
 
-  await dbPut(doc);
+    // Upload file to Firebase Storage
+    const storagePath = `documents/${docId}/${file.name}`;
+    const storageRef = storage.ref(storagePath);
+    await storageRef.put(file);
 
-  // Add to in-memory list (without fileData to save memory)
-  uploadedDocs.push({
-    id, dept, name, owner: 'Uploaded', ref, revised: doc.revised,
-    desc, html: '', uploaded: true, fileType: file.type, fileName: file.name
-  });
+    // Save metadata to Firestore
+    const docData = {
+      name,
+      dept,
+      owner: currentUserProfile ? currentUserProfile.name : 'Unknown',
+      ref,
+      revised: new Date().toISOString().slice(0,10),
+      desc,
+      fileType: file.type,
+      fileName: file.name,
+      storagePath,
+      uploadedBy: currentUser.uid,
+      uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
 
-  renderAll();
+    await docRef.set(docData);
 
-  // Handle multi-file
-  currentFileIndex++;
-  if (currentFileIndex < pendingFiles.length) {
-    showUploadModal(pendingFiles[currentFileIndex]);
-  } else {
-    closeUploadModal();
-    openDoc(id);
+    // Add to local array
+    allDocs.push({ id: docId, ...docData });
+    renderAll();
+
+    // Handle multi-file
+    currentFileIndex++;
+    if (currentFileIndex < pendingFiles.length) {
+      saveBtn.disabled = false;
+      showUploadModal(pendingFiles[currentFileIndex]);
+    } else {
+      closeUploadModal();
+      openDoc(docId);
+    }
+  } catch(err) {
+    console.error('Upload error:', err);
+    alert('Upload failed: ' + err.message);
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Add Document';
   }
-}
-
-function readFileAsBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 // ── DELETE DOC ───────────────────────────────────────────────────────────
 async function deleteDoc(e, id) {
   e.stopPropagation();
-  if (!confirm('Remove this uploaded document?')) return;
-  await dbDelete(id);
-  uploadedDocs = uploadedDocs.filter(d => d.id !== id);
-  favorites.delete(id);
-  saveFavs();
-  if (activeId === id) {
-    activeId = null;
-    document.getElementById('docPane').classList.remove('active');
-    document.getElementById('emptyState').style.display = '';
+  if (!confirm('Remove this document? This cannot be undone.')) return;
+
+  const doc = allDocs.find(d => d.id === id);
+
+  try {
+    // Delete from Firestore
+    await firestore.collection('documents').doc(id).delete();
+
+    // Delete from Storage
+    if (doc && doc.storagePath) {
+      try {
+        await storage.ref(doc.storagePath).delete();
+      } catch(storageErr) {
+        // File might already be gone, that's OK
+        console.warn('Storage delete warning:', storageErr);
+      }
+    }
+
+    // Remove from local array
+    allDocs = allDocs.filter(d => d.id !== id);
+    favorites.delete(id);
+    saveFavs();
+
+    if (activeId === id) {
+      activeId = null;
+      document.getElementById('docPane').classList.remove('active');
+      document.getElementById('emptyState').style.display = '';
+    }
+    renderAll();
+  } catch(err) {
+    console.error('Delete error:', err);
+    alert('Delete failed: ' + err.message);
   }
-  renderAll();
 }
 
 // ── RESIZE SIDEBAR ───────────────────────────────────────────────────────
