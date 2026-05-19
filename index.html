@@ -438,14 +438,20 @@ auth.onAuthStateChanged(async (user) => {
     currentUser = user;
     // Fetch user profile from Firestore
     try {
+      const ADMIN_EMAILS = ['nathan@pcgoc.com', 'sergiojr@pcgoc.com'];
+      const isAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
+
       const profileDoc = await firestore.collection('users').doc(user.uid).get();
       if (profileDoc.exists) {
         currentUserProfile = profileDoc.data();
+        // Always sync admin status based on email list
+        if (isAdmin && currentUserProfile.role !== 'admin') {
+          currentUserProfile.role = 'admin';
+          currentUserProfile.department = 'All';
+          await firestore.collection('users').doc(user.uid).update({ role: 'admin', department: 'All' });
+        }
       } else {
-        // Auto-create a profile if none exists
-        // Admin emails get admin role automatically
-        const ADMIN_EMAILS = ['nathan@pcgoc.com', 'sergiolopez1327@gmail.com'];
-        const isAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
+        // Auto-create a profile on first sign-in
         currentUserProfile = {
           name: user.email.split('@')[0],
           email: user.email,
@@ -456,11 +462,13 @@ auth.onAuthStateChanged(async (user) => {
       }
     } catch(e) {
       // If Firestore read fails, use a fallback profile
+      const ADMIN_EMAILS_FALLBACK = ['nathan@pcgoc.com', 'sergiojr@pcgoc.com'];
+      const isAdminFallback = ADMIN_EMAILS_FALLBACK.includes(user.email.toLowerCase());
       currentUserProfile = {
         name: user.email.split('@')[0],
         email: user.email,
-        role: 'department',
-        department: 'Project Management'
+        role: isAdminFallback ? 'admin' : 'department',
+        department: isAdminFallback ? 'All' : 'Project Management'
       };
     }
     enterApp();
