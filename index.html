@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SOP Organizer</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -91,7 +93,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .doc-row:hover .doc-name{color:var(--sidebar-text)}
 .doc-row.active{background:var(--sidebar-active);border-left:2px solid var(--accent-light);padding-left:30px}
 .doc-row.active .doc-name{color:var(--accent-light)}
-.doc-name{font-size:0.72rem;color:var(--sidebar-muted);line-height:1.3}
+.doc-name{font-size:0.72rem;color:var(--sidebar-muted);line-height:1.3;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .doc-row-left{display:flex;align-items:center;gap:0;flex:1;min-width:0;position:relative}
 .doc-row-left::before{content:'';position:absolute;left:-12px;top:50%;width:6px;height:1px;background:var(--sidebar-border)}
@@ -101,7 +103,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .resize-handle:hover{background:var(--accent)}
 
 /* ── MAIN CONTENT ── */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);position:relative}
 
 /* ── EMPTY STATE ── */
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--muted);text-align:center;padding:40px}
@@ -153,6 +155,16 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .doc-content hr{border:none;border-top:1px solid var(--rule);margin:2rem 0}
 .doc-content code{font-family:'IBM Plex Mono',monospace;font-size:0.82em;background:#f0ece4;padding:1px 5px;border-radius:3px}
 
+/* ── PDF VIEWER ── */
+.pdf-viewer{width:100%;max-width:780px;margin:0 auto}
+.pdf-page{margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);border-radius:4px;overflow:hidden}
+.pdf-page canvas{display:block;width:100%;height:auto}
+.pdf-loading{text-align:center;padding:40px;color:var(--muted);font-size:0.85rem}
+
+/* ── IMAGE VIEWER ── */
+.img-viewer{max-width:780px;margin:0 auto;text-align:center}
+.img-viewer img{max-width:100%;height:auto;border:1px solid var(--border);border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+
 /* ── DEPT COLORS ── */
 .pip-pm,.tag-pm{background:var(--dept-pm)}
 .pip-ac,.tag-ac{background:var(--dept-ac)}
@@ -162,7 +174,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 
 /* ── PRINT ── */
 @media print{
-  .topbar,.sidebar,.resize-handle,.desc-strip,#login-screen{display:none!important}
+  .topbar,.sidebar,.resize-handle,.desc-strip,#login-screen,.drop-overlay{display:none!important}
   .layout{display:block}
   .doc-pane{display:block!important;height:auto;overflow:visible}
   .doc-body{overflow:visible;padding:0}
@@ -192,6 +204,44 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
 .fav-dept-pip{width:3px;height:10px;border-radius:2px;flex-shrink:0}
 .fav-unstar{background:none;border:none;cursor:pointer;color:var(--accent-light);font-size:0.65rem;padding:0 2px;opacity:0.6;transition:opacity 0.15s;flex-shrink:0}
 .fav-unstar:hover{opacity:1}
+
+/* ── DROP OVERLAY ── */
+.drop-overlay{display:none;position:absolute;inset:0;background:rgba(26,26,23,0.92);z-index:50;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.drop-overlay.active{display:flex}
+.drop-overlay .drop-icon{font-size:3rem;color:var(--accent-light);line-height:1}
+.drop-overlay h3{font-family:'Lora',serif;font-size:1.2rem;color:#e8e4d8;font-weight:400}
+.drop-overlay p{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--sidebar-muted);max-width:300px;text-align:center;line-height:1.6}
+.drop-border{position:absolute;inset:16px;border:2px dashed var(--accent);border-radius:8px;pointer-events:none}
+
+/* ── UPLOAD MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border-radius:8px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 16px 48px rgba(0,0,0,0.2)}
+.modal h3{font-family:'Lora',serif;font-size:1.1rem;color:var(--text);margin-bottom:4px}
+.modal .modal-sub{font-size:0.78rem;color:var(--muted);margin-bottom:20px}
+.modal label{display:block;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:5px;margin-top:14px}
+.modal input,.modal select,.modal textarea{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;color:var(--text);background:var(--bg);outline:none;transition:border-color 0.15s}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--accent)}
+.modal textarea{height:60px;resize:vertical}
+.modal-actions{display:flex;gap:10px;margin-top:22px;justify-content:flex-end}
+.modal-actions button{padding:8px 18px;border-radius:4px;font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;font-weight:500;cursor:pointer;transition:all 0.15s}
+.btn-cancel{background:none;border:1px solid var(--border);color:var(--muted)}
+.btn-cancel:hover{border-color:var(--text);color:var(--text)}
+.btn-save{background:var(--accent);border:none;color:#fff}
+.btn-save:hover{background:var(--accent-light)}
+.file-info{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 12px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.file-info .ftype{background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-size:0.58rem;text-transform:uppercase;letter-spacing:0.05em}
+
+/* ── DELETE BTN ── */
+.del-btn{background:none;border:none;cursor:pointer;color:var(--sidebar-border);font-size:0.65rem;padding:0 2px;flex-shrink:0;line-height:1;opacity:0;transition:all 0.15s}
+.doc-row:hover .del-btn{opacity:1}
+.del-btn:hover{color:#c0392b;transform:scale(1.15)}
+
+/* ── UPLOAD BTN IN SIDEBAR ── */
+.upload-row{display:flex;align-items:center;gap:8px;padding:8px 14px;margin:4px 5px;cursor:pointer;border:1px dashed var(--sidebar-border);border-radius:3px;transition:all 0.15s;justify-content:center}
+.upload-row:hover{border-color:var(--accent);background:var(--sidebar-hover)}
+.upload-row span{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--sidebar-muted);text-transform:uppercase;letter-spacing:0.1em}
+.upload-row:hover span{color:var(--accent-light)}
 </style>
 </head>
 <body>
@@ -235,15 +285,27 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
     </div>
     <div class="sidebar-label">Standard Operating Procedures</div>
     <div class="tree" id="tree"></div>
+    <div class="upload-row" onclick="document.getElementById('fileInput').click()">
+      <span>+ Upload Document</span>
+    </div>
+    <input type="file" id="fileInput" style="display:none" multiple accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.gif,.bmp,.webp,.html,.htm,.txt" onchange="handleFileSelect(this.files)">
   </div>
 
   <div class="resize-handle" id="resizeHandle"></div>
 
-  <div class="main">
+  <div class="main" id="mainArea">
+    <!-- Drop overlay -->
+    <div class="drop-overlay" id="dropOverlay">
+      <div class="drop-border"></div>
+      <div class="drop-icon">&darr;</div>
+      <h3>Drop files to upload</h3>
+      <p>Supports PDF, DOCX, images (PNG, JPG), HTML, and text files</p>
+    </div>
+
     <div class="empty-state" id="emptyState">
       <div class="empty-glyph">&sect;</div>
       <h2>Select a document to read</h2>
-      <p>All standard operating procedures are organized by department in the sidebar. Click any document to open it.</p>
+      <p>All standard operating procedures are organized by department in the sidebar. Click any document to open it, or drag &amp; drop files to upload new SOPs.</p>
     </div>
 
     <div class="doc-pane" id="docPane">
@@ -268,7 +330,39 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
   </div>
 </div>
 
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <h3>Upload Document</h3>
+    <div class="modal-sub" id="modalFileInfo">Configure your document before adding it to the library.</div>
+    <div class="file-info" id="modalFilePreview"></div>
+    <label for="uploadName">Document Name</label>
+    <input type="text" id="uploadName" placeholder="e.g. Safety Inspection Checklist">
+    <label for="uploadDept">Department</label>
+    <select id="uploadDept">
+      <option value="Project Management">Project Management</option>
+      <option value="Accounting">Accounting</option>
+      <option value="Human Resources">Human Resources</option>
+      <option value="Executive">Executive</option>
+      <option value="Estimating">Estimating</option>
+    </select>
+    <label for="uploadRef">Reference Code</label>
+    <input type="text" id="uploadRef" placeholder="e.g. SOP-PM-003">
+    <label for="uploadDesc">Description</label>
+    <textarea id="uploadDesc" placeholder="Brief description of this document..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeUploadModal()">Cancel</button>
+      <button class="btn-save" id="modalSaveBtn" onclick="saveUploadedDoc()">Add Document</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ── PDF.js worker ────────────────────────────────────────────────────────
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
 // ── AUTH ──────────────────────────────────────────────────────────────────
 const PASSWORD_HASH = "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8";
 
@@ -296,115 +390,102 @@ function logout() { sessionStorage.removeItem('sop_auth'); location.reload(); }
 
 function enterApp() {
   document.getElementById('login-screen').classList.add('hidden');
-  loadFavs();
-  renderAll();
+  initDB().then(() => { loadFavs(); loadUploaded().then(() => renderAll()); });
 }
 
 if (sessionStorage.getItem('sop_auth')) enterApp();
 
-// ── DATA ─────────────────────────────────────────────────────────────────
-const DOCS_DATA = [
-  {
-    id: 1,
-    dept: "Project Management",
-    name: "Project Kickoff Procedure",
-    owner: "Project Management Dept.",
-    ref: "SOP-PM-001",
-    revised: "2026-01-15",
-    desc: "Standardized process for initiating new construction projects, including stakeholder alignment, document distribution, and project setup.",
-    html: `<h1>Project Kickoff Procedure</h1><h3>1. Purpose</h3><p>Establish a standardized process for kicking off new construction projects to ensure all teams are aligned from day one. A consistent kickoff process reduces miscommunication, sets clear expectations, and ensures no critical steps are missed during the transition from pre-construction to active project management.</p><h3>2. Scope</h3><p>This procedure applies to all new construction projects valued over $50,000. For projects under this threshold, a simplified kickoff checklist may be used at the Project Manager's discretion.</p><h3>3. Procedure</h3><ol><li><strong>Receive signed contract from Estimating.</strong> The Project Manager receives the executed contract package, including the owner agreement, scope of work, and approved budget from the Estimating department.</li><li><strong>Schedule kickoff meeting within 5 business days.</strong> Coordinate with all key stakeholders including the Superintendent, Project Engineer, Estimator, and relevant subcontractors to schedule the internal kickoff meeting.</li><li><strong>Distribute project binder.</strong> Prepare and distribute the project binder containing: scope of work, project schedule, approved budget, contact directory, site logistics plan, and relevant permits.</li><li><strong>Assign roles and responsibilities.</strong> Clearly define and communicate roles for all team members. Document assignments in the project management system and distribute to the team.</li><li><strong>Conduct site visit with Superintendent.</strong> Perform a comprehensive site walk with the Superintendent to review existing conditions, access points, staging areas, and any site-specific safety concerns.</li><li><strong>Enter project into project management software.</strong> Create the project in the PM system with all relevant data: budget codes, schedule milestones, contact information, and document control structure.</li></ol><h3>4. References</h3><p>Company Project Management Handbook, Section 3. See also SOP-PM-002 for Change Order Processing procedures that may arise during project execution.</p>`
-  },
-  {
-    id: 2,
-    dept: "Project Management",
-    name: "Change Order Processing",
-    owner: "Project Management Dept.",
-    ref: "SOP-PM-002",
-    revised: "2026-02-10",
-    desc: "Procedure for identifying, documenting, approving, and tracking change orders to protect project scope and budget integrity.",
-    html: `<h1>Change Order Processing</h1><h3>1. Purpose</h3><p>Define the process for handling change orders to protect project scope and budget. Proper change order management ensures that all scope modifications are documented, priced, approved, and tracked to prevent budget overruns and scope disputes.</p><h3>2. Scope</h3><p>This procedure applies to all active construction projects. Any modification to the original contract scope, schedule, or budget must follow this process regardless of the dollar amount.</p><h3>3. Procedure</h3><ol><li><strong>Identify scope change and document.</strong> When a scope change is identified by any team member, document it immediately with photographs, field notes, and a written description of the changed condition or owner request.</li><li><strong>Submit Change Order Request form to Project Manager.</strong> Complete the standard Change Order Request (COR) form and submit to the PM within 48 hours of identifying the change. Include all supporting documentation.</li><li><strong>PM reviews and obtains cost estimate from Estimating.</strong> The Project Manager reviews the COR for completeness, then coordinates with the Estimating department to develop a detailed cost estimate including labor, materials, equipment, subcontractor costs, overhead, and profit.</li><li><strong>Submit to client for written approval.</strong> Present the fully documented change order proposal to the client. No work on the changed scope shall proceed until written approval is received from the client or their authorized representative.</li><li><strong>Update project schedule and budget upon approval.</strong> Once approved, immediately update the project schedule, budget, and all tracking documents. Notify all affected team members and subcontractors of the approved changes.</li><li><strong>File approved change order in project documentation.</strong> Maintain the complete change order record including the original COR, cost estimate, client approval, and any related correspondence in the project document control system.</li></ol>`
-  },
-  {
-    id: 3,
-    dept: "Accounting",
-    name: "Invoice Submission Process",
-    owner: "Accounting Dept.",
-    ref: "SOP-AC-001",
-    revised: "2026-01-20",
-    desc: "Standard procedure for preparing and submitting monthly progress invoices, tracking accounts receivable, and managing payment follow-up.",
-    html: `<h1>Invoice Submission Process</h1><h3>1. Purpose</h3><p>Ensure timely and accurate billing for all active projects. Consistent invoicing practices maintain healthy cash flow, reduce disputes with clients, and provide accurate financial reporting for project performance analysis.</p><h3>2. Scope</h3><p>This procedure applies to all active projects with billable work. Both GMP (Guaranteed Maximum Price) and Stipulated Sum projects follow this process, with format variations noted where applicable.</p><h3>3. Procedure</h3><ol><li><strong>Project Manager submits monthly progress report by the 25th.</strong> The PM completes the monthly progress report detailing percentage of completion for each schedule of values line item, including supporting documentation for work completed during the billing period.</li><li><strong>Accounting prepares invoice based on percentage of completion.</strong> Using the PM's progress report, the accounting team prepares the formal invoice package including the G702 Application for Payment, G703 Continuation Sheet, and any required lien releases.</li><li><strong>Invoice reviewed and approved by PM and Director.</strong> The draft invoice is routed to the Project Manager for accuracy review and then to the Director for final approval before submission to the client.</li><li><strong>Submit invoice to client via email and mail.</strong> The approved invoice package is submitted to the client through their preferred method, typically both email and certified mail. Record the submission date and method in the billing log.</li><li><strong>Log invoice in accounts receivable tracker.</strong> Enter the invoice details into the AR tracking system including invoice number, amount, submission date, and expected payment date based on contract terms.</li><li><strong>Follow up on unpaid invoices after 30 days.</strong> If payment is not received within the contract payment terms (typically Net 30), initiate the collections follow-up process: email reminder at 30 days, phone call at 45 days, formal demand letter at 60 days.</li></ol>`
-  },
-  {
-    id: 4,
-    dept: "Accounting",
-    name: "Expense Report Approval",
-    owner: "Accounting Dept.",
-    ref: "SOP-AC-002",
-    revised: "2026-03-01",
-    desc: "Process for submitting, reviewing, and approving employee expense reports to ensure timely reimbursement and proper cost allocation.",
-    html: `<h1>Expense Report Approval</h1><h3>1. Purpose</h3><p>Standardize the expense reimbursement process across all departments. A consistent process ensures that employees are reimbursed promptly, expenses are properly coded to the correct projects or overhead accounts, and the company maintains adequate documentation for audit purposes.</p><h3>2. Scope</h3><p>This procedure applies to all employees submitting expense reports for business-related expenditures including travel, meals, supplies, and other pre-approved expenses.</p><h3>3. Procedure</h3><ol><li><strong>Employee completes expense report with itemized receipts.</strong> Using the standard expense report form, the employee lists each expense with the date, vendor, amount, business purpose, and project code. Original receipts must be attached for all expenses over $25.</li><li><strong>Submit to direct supervisor within 14 days of expense.</strong> The completed expense report must be submitted to the employee's direct supervisor within 14 calendar days of the expense being incurred. Late submissions may delay reimbursement.</li><li><strong>Supervisor reviews and signs off.</strong> The supervisor verifies that all expenses are legitimate business expenses, properly documented, and coded to the correct project or overhead account. The supervisor signs the report indicating approval.</li><li><strong>Forward to Accounting for processing.</strong> The approved expense report is forwarded to the Accounting department for data entry, coding verification, and payment processing.</li><li><strong>Reimbursement issued within 10 business days.</strong> Accounting processes the approved expense report and issues reimbursement to the employee within 10 business days via direct deposit or company check.</li></ol>`
-  },
-  {
-    id: 5,
-    dept: "Human Resources",
-    name: "New Hire Onboarding",
-    owner: "Human Resources Dept.",
-    ref: "SOP-HR-001",
-    revised: "2026-02-01",
-    desc: "Complete onboarding procedure for all new employees covering pre-employment requirements, orientation, safety training, and integration into the team.",
-    html: `<h1>New Hire Onboarding</h1><h3>1. Purpose</h3><p>Provide a consistent onboarding experience for every new employee. Effective onboarding improves retention, accelerates time-to-productivity, ensures regulatory compliance, and establishes a positive foundation for the employee's career with the company.</p><h3>2. Scope</h3><p>This procedure applies to all new hires including full-time, part-time, and temporary employees across all departments and job classifications.</p><h3>3. Procedure</h3><ol><li><strong>HR sends offer letter and pre-employment paperwork.</strong> Upon acceptance of the verbal offer, HR sends the formal offer letter along with pre-employment forms including W-4, I-9, direct deposit authorization, emergency contact information, and benefit enrollment forms.</li><li><strong>Complete background check and drug screening.</strong> All new hires must pass a background check and drug screening before their start date. Results are reviewed by HR and any concerns are escalated to the hiring manager and HR Director.</li><li><strong>Schedule Day 1 orientation.</strong> Coordinate the first-day orientation including: company safety training, employee handbook review, IT system setup and credentials, facility tour, introduction to key team members, and issuance of company ID and PPE.</li><li><strong>Assign buddy or mentor from the employee's department.</strong> Designate an experienced team member as a buddy/mentor to help the new hire navigate their first 90 days. The buddy provides informal guidance on company culture, processes, and day-to-day operations.</li><li><strong>Complete required OSHA and company safety certifications within 30 days.</strong> All field employees must complete OSHA 10 or OSHA 30 (as applicable) and all company-specific safety certifications within their first 30 days of employment.</li><li><strong>30-day check-in with HR and supervisor.</strong> HR and the employee's supervisor conduct a formal 30-day check-in to review progress, address any concerns, confirm training completion, and ensure the new hire is integrating successfully.</li></ol>`
-  },
-  {
-    id: 6,
-    dept: "Human Resources",
-    name: "Incident Reporting",
-    owner: "Human Resources Dept.",
-    ref: "SOP-HR-002",
-    revised: "2026-01-10",
-    desc: "Procedure for reporting, documenting, and investigating workplace injuries, near-miss incidents, and safety concerns to ensure compliance and prevent recurrence.",
-    html: `<h1>Incident Reporting</h1><h3>1. Purpose</h3><p>Ensure all workplace incidents are reported, documented, and investigated promptly. Thorough incident reporting protects employees, ensures regulatory compliance, identifies root causes, and drives continuous improvement in workplace safety.</p><h3>2. Scope</h3><p>This procedure applies to all workplace incidents including injuries, illnesses, near-misses, property damage, and environmental releases occurring on any company jobsite or facility.</p><h3>3. Procedure</h3><ol><li><strong>Secure the scene and provide first aid or call emergency services.</strong> The first priority is always the safety of the injured person and others in the area. Secure the scene to prevent additional injuries, administer first aid if trained to do so, and call 911 for serious injuries.</li><li><strong>Notify supervisor immediately.</strong> The employee or witness must notify their direct supervisor as soon as the scene is safe. The supervisor is responsible for ensuring medical care is provided and initiating the reporting process.</li><li><strong>Complete Incident Report Form within 24 hours.</strong> The supervisor completes the detailed Incident Report Form within 24 hours, including: date, time, location, persons involved, witnesses, description of events, injury details, and any immediate corrective actions taken.</li><li><strong>Submit form to HR and Safety Director.</strong> The completed Incident Report is submitted to both the HR department and the Safety Director for review and tracking. Serious incidents must be reported to the Safety Director immediately by phone, not just in writing.</li><li><strong>Investigation conducted within 48 hours.</strong> The Safety Director leads a formal investigation within 48 hours of the incident. The investigation includes interviews with involved parties and witnesses, scene documentation, root cause analysis, and identification of contributing factors.</li><li><strong>Corrective actions documented and implemented.</strong> Based on the investigation findings, develop and implement corrective actions to prevent recurrence. Document all corrective actions with responsible parties and target completion dates. Follow up to verify implementation.</li><li><strong>File OSHA reports if applicable.</strong> Determine if the incident meets OSHA reporting thresholds (fatality, hospitalization, amputation, or loss of eye). If so, file the required OSHA report within the mandated timeframe. Maintain all records per OSHA recordkeeping requirements.</li></ol>`
-  },
-  {
-    id: 7,
-    dept: "Executive",
-    name: "Annual Strategic Planning",
-    owner: "Executive Team",
-    ref: "SOP-EX-001",
-    revised: "2025-12-15",
-    desc: "Process for conducting the annual strategic planning cycle including performance review, goal-setting, budget allocation, and company-wide communication.",
-    html: `<h1>Annual Strategic Planning</h1><h3>1. Purpose</h3><p>Establish the company's strategic direction and annual goals through a structured planning process. Strategic planning aligns all departments toward common objectives, ensures resources are allocated effectively, and provides a framework for measuring organizational performance.</p><h3>2. Scope</h3><p>This procedure applies to the annual planning cycle and involves the Executive Team, Department Heads, and key stakeholders across all business units.</p><h3>3. Procedure</h3><ol><li><strong>CEO initiates planning cycle in Q4.</strong> The CEO formally launches the annual strategic planning cycle in the fourth quarter by distributing the planning timeline, data requirements, and expectations to all Department Heads. Prior year goals and KPIs are compiled for review.</li><li><strong>Department heads submit performance reviews and projections.</strong> Each Department Head prepares and submits a comprehensive review of their department's performance against current year goals, along with projections and strategic recommendations for the coming year.</li><li><strong>Executive team conducts 2-day offsite planning session.</strong> The Executive Team convenes for a structured two-day offsite session to review company performance, analyze market conditions, assess competitive position, and develop strategic priorities for the coming year.</li><li><strong>Define company-wide goals, KPIs, and budget allocations.</strong> Based on the strategic planning session, finalize the company's annual goals, key performance indicators, and departmental budget allocations. Ensure goals are specific, measurable, and aligned with the long-term vision.</li><li><strong>Communicate plan to all employees within 30 days.</strong> The approved strategic plan is communicated to all employees through a company-wide meeting, followed by departmental meetings where managers translate company goals into team-specific objectives and action plans.</li><li><strong>Quarterly reviews to track progress against goals.</strong> The Executive Team conducts quarterly business reviews to assess progress against strategic goals, identify emerging risks or opportunities, and make necessary adjustments to keep the organization on track.</li></ol>`
-  },
-  {
-    id: 8,
-    dept: "Executive",
-    name: "Policy Revision & Approval",
-    owner: "Executive Team",
-    ref: "SOP-EX-002",
-    revised: "2026-02-20",
-    desc: "Procedure for proposing, reviewing, approving, and distributing changes to company-wide policies in a controlled and documented manner.",
-    html: `<h1>Policy Revision &amp; Approval</h1><h3>1. Purpose</h3><p>Ensure all company policies are reviewed, approved, and distributed in a controlled manner. A formal policy management process maintains consistency, ensures legal compliance, and provides clear documentation of all policy changes and their effective dates.</p><h3>2. Scope</h3><p>This procedure applies to all company-wide policies including HR policies, safety policies, operational procedures, and financial policies. Department-specific procedures may follow a simplified version of this process with Department Head approval.</p><h3>3. Procedure</h3><ol><li><strong>Policy change proposed via Policy Revision Request form.</strong> Any employee may propose a policy change by completing the Policy Revision Request form, which includes the current policy reference, proposed changes, rationale for the change, and expected impact assessment.</li><li><strong>Legal and compliance review.</strong> If the proposed change affects regulatory compliance, employment law, safety regulations, or contractual obligations, the proposal is routed to legal counsel for review and guidance before proceeding.</li><li><strong>Executive committee review and vote.</strong> The Executive Committee reviews the proposed policy change, considers the legal review findings, and votes on approval. A majority vote is required for adoption. Discussion points and the vote outcome are recorded in the meeting minutes.</li><li><strong>Approved policies updated in the company handbook.</strong> Upon approval, the policy is updated in the official company handbook with the new effective date, revision number, and summary of changes. The previous version is archived for reference.</li><li><strong>All employees notified and acknowledge receipt.</strong> HR distributes the updated policy to all affected employees via email and the company intranet. Employees are required to acknowledge receipt and review of the updated policy within 14 days.</li><li><strong>Old versions archived with revision history.</strong> All superseded policy versions are archived with a complete revision history documenting what changed, when it changed, who approved it, and the business rationale. Archives are maintained for a minimum of 7 years.</li></ol>`
-  },
-  {
-    id: 9,
-    dept: "Estimating",
-    name: "Bid Preparation Process",
-    owner: "Estimating Dept.",
-    ref: "SOP-ES-001",
-    revised: "2026-01-25",
-    desc: "Standard procedure for preparing, reviewing, and submitting competitive and accurate project bids from invitation through final submission.",
-    html: `<h1>Bid Preparation Process</h1><h3>1. Purpose</h3><p>Standardize the bid preparation process to ensure accurate, competitive, and timely proposals. A consistent estimating process reduces errors, improves win rates, and ensures that all bids accurately reflect project costs and company margin requirements.</p><h3>2. Scope</h3><p>This procedure applies to all project bids including public works, private negotiated, and design-build proposals. The level of detail and review requirements may vary based on project value and complexity.</p><h3>3. Procedure</h3><ol><li><strong>Receive bid invitation and log in bid tracking system.</strong> When a bid invitation or RFP is received, log it immediately in the bid tracking system with key details: project name, owner, architect, bid date, estimated value, and assigned estimator. Evaluate bid/no-bid criteria.</li><li><strong>Conduct plan review and site visit within 3 days.</strong> The assigned estimator performs a thorough review of the plans and specifications. Schedule and complete a site visit within 3 business days to assess existing conditions, access, logistics, and any site-specific factors that may impact the estimate.</li><li><strong>Complete quantity takeoff using estimating software.</strong> Perform detailed quantity takeoffs for all self-performed work using the company's estimating software. Verify quantities against the plans and document any discrepancies or ambiguities for RFI submission.</li><li><strong>Request subcontractor and material quotes.</strong> Distribute bid packages to qualified subcontractors and material suppliers. Allow adequate time for pricing. Follow up on outstanding quotes and ensure a minimum of three competitive bids per trade where possible.</li><li><strong>Build estimate with labor, materials, equipment, overhead, and profit.</strong> Compile the complete estimate including: self-performed labor with current crew rates, materials with verified pricing, equipment costs, general conditions, general requirements, insurance, bonding, overhead, and profit per company margin guidelines.</li><li><strong>Senior Estimator reviews and approves final numbers.</strong> The Senior Estimator or Chief Estimator performs a comprehensive review of the estimate including scope coverage, pricing accuracy, subcontractor selection, risk factors, and overall competitiveness. Final markup and strategy are confirmed.</li><li><strong>Submit bid before deadline with required bonds and documents.</strong> Prepare the final bid package including all required forms, bid bond, licenses, certifications, and supporting documents. Submit before the deadline with confirmation of receipt. Log the final bid amount in the tracking system.</li></ol>`
-  },
-  {
-    id: 10,
-    dept: "Estimating",
-    name: "Cost Database Maintenance",
-    owner: "Estimating Dept.",
-    ref: "SOP-ES-002",
-    revised: "2026-03-05",
-    desc: "Procedure for regularly reviewing, updating, and maintaining the company's unit cost database to ensure estimates reflect current market conditions.",
-    html: `<h1>Cost Database Maintenance</h1><h3>1. Purpose</h3><p>Keep the estimating cost database accurate and reflective of current market conditions. An up-to-date cost database is the foundation of accurate estimating. Regular maintenance ensures that bids are competitive and profitable by reflecting actual field costs and current market pricing.</p><h3>2. Scope</h3><p>This procedure applies to the company's master cost database used by all estimators. It covers labor rates, material costs, equipment rates, subcontractor pricing, and productivity factors.</p><h3>3. Procedure</h3><ol><li><strong>Review cost database quarterly against actual project costs.</strong> Each quarter, compare estimated costs against actual costs from completed and in-progress projects. The Estimating team coordinates with Project Managers and Accounting to obtain accurate job cost reports.</li><li><strong>Update unit costs for labor, materials, and equipment.</strong> Based on the quarterly review and current market intelligence, update unit costs across all categories. Labor rates should reflect current union scales or prevailing wages, material costs should reflect current supplier pricing, and equipment rates should match current rental market rates.</li><li><strong>Document sources for all cost updates.</strong> Every cost update must be documented with the source of the new pricing: supplier quote, subcontractor bid, job cost report, published index, or market survey. This documentation supports estimate defensibility and audit requirements.</li><li><strong>Flag items with variance greater than 10% for review.</strong> Any cost item showing a variance greater than 10% from the previous quarter is flagged for additional review by the Senior Estimator. Significant variances may indicate market shifts, data entry errors, or project-specific anomalies that should not be applied broadly.</li><li><strong>Archive previous cost data for historical reference.</strong> Before applying updates, archive the current database version with a date stamp. Historical cost data is valuable for trend analysis, dispute resolution, and understanding cost escalation patterns over time.</li><li><strong>Distribute updated database to all estimators.</strong> Once updates are reviewed and approved by the Senior Estimator, distribute the updated database to all estimating staff. Conduct a brief review meeting to highlight significant changes and discuss market trends affecting pricing.</li></ol>`
-  }
+// ── INDEXEDDB ────────────────────────────────────────────────────────────
+let db = null;
+const DB_NAME = 'SOPOrganizerDB';
+const DB_VERSION = 1;
+
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('documents')) {
+        d.createObjectStore('documents', { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(); };
+    req.onerror = () => reject();
+  });
+}
+
+function dbPut(doc) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('documents', 'readwrite');
+    tx.objectStore('documents').put(doc);
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  });
+}
+
+function dbDelete(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('documents', 'readwrite');
+    tx.objectStore('documents').delete(id);
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  });
+}
+
+function dbGetAll() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('documents', 'readonly');
+    const req = tx.objectStore('documents').getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = reject;
+  });
+}
+
+function dbGet(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('documents', 'readonly');
+    const req = tx.objectStore('documents').get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = reject;
+  });
+}
+
+// ── BUILT-IN DATA ────────────────────────────────────────────────────────
+const BUILTIN_DOCS = [
+  { id: 1, dept: "Project Management", name: "Project Kickoff Procedure", owner: "Project Management Dept.", ref: "SOP-PM-001", revised: "2026-01-15", desc: "Standardized process for initiating new construction projects, including stakeholder alignment, document distribution, and project setup.", html: `<h1>Project Kickoff Procedure</h1><h3>1. Purpose</h3><p>Establish a standardized process for kicking off new construction projects to ensure all teams are aligned from day one.</p><h3>2. Scope</h3><p>Applies to all new projects valued over $50,000.</p><h3>3. Procedure</h3><ol><li><strong>Receive signed contract from Estimating.</strong> The Project Manager receives the executed contract package from the Estimating department.</li><li><strong>Schedule kickoff meeting within 5 business days.</strong> Coordinate with all key stakeholders to schedule the internal kickoff meeting.</li><li><strong>Distribute project binder.</strong> Prepare and distribute the project binder containing scope, schedule, budget, contacts, and site logistics.</li><li><strong>Assign roles and responsibilities.</strong> Clearly define and communicate roles for all team members.</li><li><strong>Conduct site visit with Superintendent.</strong> Perform a comprehensive site walk to review existing conditions and safety concerns.</li><li><strong>Enter project into project management software.</strong> Create the project with all relevant data: budget codes, schedule milestones, and contacts.</li></ol><h3>4. References</h3><p>Company Project Management Handbook, Section 3.</p>` },
+  { id: 2, dept: "Project Management", name: "Change Order Processing", owner: "Project Management Dept.", ref: "SOP-PM-002", revised: "2026-02-10", desc: "Procedure for identifying, documenting, approving, and tracking change orders to protect project scope and budget.", html: `<h1>Change Order Processing</h1><h3>1. Purpose</h3><p>Define the process for handling change orders to protect project scope and budget.</p><h3>2. Procedure</h3><ol><li><strong>Identify scope change and document.</strong> Document immediately with photographs, field notes, and a written description.</li><li><strong>Submit Change Order Request form.</strong> Complete the COR form and submit to the PM within 48 hours.</li><li><strong>PM reviews and obtains cost estimate.</strong> Coordinate with Estimating for a detailed cost estimate.</li><li><strong>Submit to client for written approval.</strong> No work shall proceed until written approval is received.</li><li><strong>Update project schedule and budget.</strong> Immediately update all tracking documents upon approval.</li><li><strong>File approved change order.</strong> Maintain the complete record in the document control system.</li></ol>` },
+  { id: 3, dept: "Accounting", name: "Invoice Submission Process", owner: "Accounting Dept.", ref: "SOP-AC-001", revised: "2026-01-20", desc: "Standard procedure for preparing and submitting monthly progress invoices and tracking payments.", html: `<h1>Invoice Submission Process</h1><h3>1. Purpose</h3><p>Ensure timely and accurate billing for all active projects.</p><h3>2. Procedure</h3><ol><li><strong>PM submits monthly progress report by the 25th.</strong> Detail percentage of completion for each line item.</li><li><strong>Accounting prepares invoice.</strong> Prepare the G702, G703, and lien releases based on the progress report.</li><li><strong>Invoice reviewed and approved by PM and Director.</strong> Route for accuracy review and final approval.</li><li><strong>Submit invoice to client.</strong> Send via email and certified mail. Record in the billing log.</li><li><strong>Log invoice in AR tracker.</strong> Enter details including invoice number, amount, and expected payment date.</li><li><strong>Follow up on unpaid invoices after 30 days.</strong> Email at 30 days, phone at 45, formal letter at 60.</li></ol>` },
+  { id: 4, dept: "Accounting", name: "Expense Report Approval", owner: "Accounting Dept.", ref: "SOP-AC-002", revised: "2026-03-01", desc: "Process for submitting and approving employee expense reports for timely reimbursement.", html: `<h1>Expense Report Approval</h1><h3>1. Purpose</h3><p>Standardize the expense reimbursement process across all departments.</p><h3>2. Procedure</h3><ol><li><strong>Employee completes expense report with receipts.</strong> List each expense with date, vendor, amount, purpose, and project code.</li><li><strong>Submit to supervisor within 14 days.</strong> Late submissions may delay reimbursement.</li><li><strong>Supervisor reviews and signs off.</strong> Verify expenses are legitimate and properly coded.</li><li><strong>Forward to Accounting for processing.</strong> For data entry, coding verification, and payment.</li><li><strong>Reimbursement issued within 10 business days.</strong> Via direct deposit or company check.</li></ol>` },
+  { id: 5, dept: "Human Resources", name: "New Hire Onboarding", owner: "Human Resources Dept.", ref: "SOP-HR-001", revised: "2026-02-01", desc: "Complete onboarding procedure for all new employees covering orientation, safety training, and team integration.", html: `<h1>New Hire Onboarding</h1><h3>1. Purpose</h3><p>Provide a consistent onboarding experience for every new employee.</p><h3>2. Procedure</h3><ol><li><strong>HR sends offer letter and pre-employment paperwork.</strong> W-4, I-9, direct deposit, emergency contacts, and benefit forms.</li><li><strong>Complete background check and drug screening.</strong> Must pass before start date.</li><li><strong>Schedule Day 1 orientation.</strong> Safety training, handbook review, IT setup, facility tour, and PPE issuance.</li><li><strong>Assign buddy or mentor.</strong> An experienced team member guides the new hire through their first 90 days.</li><li><strong>Complete OSHA and safety certifications within 30 days.</strong> OSHA 10/30 and company-specific certifications.</li><li><strong>30-day check-in with HR and supervisor.</strong> Review progress, address concerns, and confirm training completion.</li></ol>` },
+  { id: 6, dept: "Human Resources", name: "Incident Reporting", owner: "Human Resources Dept.", ref: "SOP-HR-002", revised: "2026-01-10", desc: "Procedure for reporting and investigating workplace injuries, near-misses, and safety concerns.", html: `<h1>Incident Reporting</h1><h3>1. Purpose</h3><p>Ensure all workplace incidents are reported, documented, and investigated promptly.</p><h3>2. Procedure</h3><ol><li><strong>Secure the scene and provide first aid.</strong> Call 911 for serious injuries.</li><li><strong>Notify supervisor immediately.</strong> The supervisor initiates the reporting process.</li><li><strong>Complete Incident Report Form within 24 hours.</strong> Include date, time, location, persons involved, and witnesses.</li><li><strong>Submit to HR and Safety Director.</strong> Serious incidents must be reported by phone immediately.</li><li><strong>Investigation conducted within 48 hours.</strong> Includes interviews, scene documentation, and root cause analysis.</li><li><strong>Corrective actions documented and implemented.</strong> Assign responsible parties and target dates.</li><li><strong>File OSHA reports if applicable.</strong> Within mandated timeframes for qualifying incidents.</li></ol>` },
+  { id: 7, dept: "Executive", name: "Annual Strategic Planning", owner: "Executive Team", ref: "SOP-EX-001", revised: "2025-12-15", desc: "Process for the annual strategic planning cycle including performance review, goal-setting, and communication.", html: `<h1>Annual Strategic Planning</h1><h3>1. Purpose</h3><p>Establish the company's strategic direction and annual goals through a structured planning process.</p><h3>2. Procedure</h3><ol><li><strong>CEO initiates planning cycle in Q4.</strong> Distribute planning timeline and data requirements to Department Heads.</li><li><strong>Department heads submit reviews and projections.</strong> Performance against current goals plus recommendations.</li><li><strong>Executive team conducts 2-day offsite.</strong> Review performance, analyze market, and develop priorities.</li><li><strong>Define goals, KPIs, and budget allocations.</strong> Ensure goals are specific, measurable, and aligned with vision.</li><li><strong>Communicate plan within 30 days.</strong> Company-wide meeting followed by departmental sessions.</li><li><strong>Quarterly reviews to track progress.</strong> Assess progress, identify risks, and make adjustments.</li></ol>` },
+  { id: 8, dept: "Executive", name: "Policy Revision & Approval", owner: "Executive Team", ref: "SOP-EX-002", revised: "2026-02-20", desc: "Procedure for proposing, reviewing, and approving changes to company-wide policies.", html: `<h1>Policy Revision &amp; Approval</h1><h3>1. Purpose</h3><p>Ensure all company policies are reviewed, approved, and distributed in a controlled manner.</p><h3>2. Procedure</h3><ol><li><strong>Propose change via Policy Revision Request form.</strong> Include current policy reference, proposed changes, and rationale.</li><li><strong>Legal and compliance review.</strong> Route to legal counsel if regulatory or employment law is affected.</li><li><strong>Executive committee review and vote.</strong> Majority vote required. Outcome recorded in minutes.</li><li><strong>Update company handbook.</strong> New effective date, revision number, and summary of changes.</li><li><strong>Notify all employees.</strong> Distribute via email and intranet. Acknowledgment required within 14 days.</li><li><strong>Archive old versions.</strong> Complete revision history maintained for minimum 7 years.</li></ol>` },
+  { id: 9, dept: "Estimating", name: "Bid Preparation Process", owner: "Estimating Dept.", ref: "SOP-ES-001", revised: "2026-01-25", desc: "Standard procedure for preparing, reviewing, and submitting competitive project bids.", html: `<h1>Bid Preparation Process</h1><h3>1. Purpose</h3><p>Standardize bid preparation to ensure accurate, competitive, and timely proposals.</p><h3>2. Procedure</h3><ol><li><strong>Log bid invitation in tracking system.</strong> Project name, owner, bid date, estimated value, and assigned estimator.</li><li><strong>Plan review and site visit within 3 days.</strong> Assess conditions, access, logistics, and site-specific factors.</li><li><strong>Complete quantity takeoff.</strong> Detailed takeoffs using estimating software. Document discrepancies.</li><li><strong>Request subcontractor and material quotes.</strong> Minimum three competitive bids per trade where possible.</li><li><strong>Build complete estimate.</strong> Labor, materials, equipment, GCs, insurance, overhead, and profit.</li><li><strong>Senior Estimator reviews final numbers.</strong> Scope coverage, pricing accuracy, risk factors, and competitiveness.</li><li><strong>Submit bid before deadline.</strong> Include all required forms, bid bond, licenses, and certifications.</li></ol>` },
+  { id: 10, dept: "Estimating", name: "Cost Database Maintenance", owner: "Estimating Dept.", ref: "SOP-ES-002", revised: "2026-03-05", desc: "Procedure for reviewing and updating the company's unit cost database to reflect current market conditions.", html: `<h1>Cost Database Maintenance</h1><h3>1. Purpose</h3><p>Keep the estimating cost database accurate and reflective of current market conditions.</p><h3>2. Procedure</h3><ol><li><strong>Review database quarterly against actual costs.</strong> Compare estimates to actuals from completed projects.</li><li><strong>Update unit costs for labor, materials, and equipment.</strong> Reflect current union scales, supplier pricing, and rental rates.</li><li><strong>Document sources for all updates.</strong> Supplier quotes, job cost reports, published indices, or market surveys.</li><li><strong>Flag items with 10%+ variance.</strong> Additional review by Senior Estimator required.</li><li><strong>Archive previous cost data.</strong> Date-stamped versions for trend analysis and dispute resolution.</li><li><strong>Distribute updated database to all estimators.</strong> Brief review meeting to highlight significant changes.</li></ol>` }
 ];
+
+// ── MERGED DATA ──────────────────────────────────────────────────────────
+let uploadedDocs = [];
+function getAllDocs() { return [...BUILTIN_DOCS, ...uploadedDocs]; }
+
+async function loadUploaded() {
+  if (!db) return;
+  const all = await dbGetAll();
+  uploadedDocs = all.map(d => ({
+    id: d.id,
+    dept: d.dept,
+    name: d.name,
+    owner: d.owner || 'Uploaded',
+    ref: d.ref || '',
+    revised: d.revised || new Date().toISOString().slice(0,10),
+    desc: d.desc || '',
+    html: d.html || '',
+    uploaded: true,
+    fileType: d.fileType,
+    fileData: d.fileData,
+    fileName: d.fileName
+  }));
+}
 
 // ── DEPT CONFIG ──────────────────────────────────────────────────────────
 const DEPT_CLASS = {
@@ -422,6 +503,7 @@ function deptColor(dept) {
 
 // ── STATE ────────────────────────────────────────────────────────────────
 let activeId = null;
+let activeIsUploaded = false;
 let searchTerm = '';
 let favorites = new Set();
 const FAV_KEY = 'sop-organizer-favorites';
@@ -432,20 +514,31 @@ function loadFavs() {
 }
 function saveFavs() { localStorage.setItem(FAV_KEY, JSON.stringify([...favorites])); }
 
-// ── INIT ─────────────────────────────────────────────────────────────────
-function renderAll() { renderFavs(); renderTree(); }
+// ── RENDER ───────────────────────────────────────────────────────────────
+function renderAll() {
+  renderFavs();
+  renderTree();
+  updateDocCount();
+}
 
-// ── FAVORITES PANEL ──────────────────────────────────────────────────────
+function updateDocCount() {
+  const all = getAllDocs();
+  const depts = new Set(all.map(d => d.dept));
+  document.getElementById('docCountLabel').textContent = `${all.length} documents`;
+}
+
+// ── FAVORITES ────────────────────────────────────────────────────────────
 function renderFavs() {
   const section = document.getElementById('favSection');
   const list = document.getElementById('favList');
-  const favDocs = DOCS_DATA.filter(d => favorites.has(d.id));
+  const all = getAllDocs();
+  const favDocs = all.filter(d => favorites.has(d.id));
   section.classList.toggle('empty', favDocs.length === 0);
   list.innerHTML = favDocs.map(d => `
-    <div class="fav-row ${d.id===activeId?'active':''}" onclick="openDoc(${d.id})">
+    <div class="fav-row ${d.id===activeId?'active':''}" onclick="openDoc(${typeof d.id === 'string' ? "'"+d.id+"'" : d.id})">
       <div class="fav-dept-pip" style="background:${deptColor(d.dept)}"></div>
       <span class="fav-name">${d.name}</span>
-      <button class="fav-unstar" onclick="toggleFav(event,${d.id})" title="Remove from favorites">&starf;</button>
+      <button class="fav-unstar" onclick="toggleFav(event,${typeof d.id === 'string' ? "'"+d.id+"'" : d.id})" title="Remove from favorites">&starf;</button>
     </div>`).join('');
 }
 
@@ -467,17 +560,19 @@ function grouped(docs) {
 
 function renderTree() {
   const term = searchTerm.toLowerCase();
+  const all = getAllDocs();
   const filtered = term
-    ? DOCS_DATA.filter(d =>
+    ? all.filter(d =>
         d.name.toLowerCase().includes(term) ||
         d.dept.toLowerCase().includes(term) ||
         d.desc.toLowerCase().includes(term) ||
-        d.html.toLowerCase().includes(term)
+        (d.html && d.html.toLowerCase().includes(term))
       )
-    : DOCS_DATA;
+    : all;
 
-  document.getElementById('docCountLabel').textContent =
-    term ? `${filtered.length} of ${DOCS_DATA.length} docs` : `${DOCS_DATA.length} documents`;
+  if (term) {
+    document.getElementById('docCountLabel').textContent = `${filtered.length} of ${all.length} docs`;
+  }
 
   const deptOrder = ['Project Management','Accounting','Human Resources','Executive','Estimating'];
   const depts = grouped(filtered);
@@ -497,16 +592,20 @@ function renderTree() {
         <span class="dept-arrow">&#9654;</span>
       </div>
       <div class="doc-list ${open?'open':''}">
-        ${items.map(d => `
-          <div class="doc-row ${d.id===activeId?'active':''}" onclick="openDoc(${d.id})">
+        ${items.map(d => {
+          const idArg = typeof d.id === 'string' ? "'"+d.id+"'" : d.id;
+          return `
+          <div class="doc-row ${d.id===activeId?'active':''}" onclick="openDoc(${idArg})">
             <div class="doc-row-left">
-              <span class="doc-name">${term ? highlight(d.name, term) : d.name}</span>
+              <span class="doc-name">${term ? highlight(d.name, term) : d.name}${d.uploaded ? ' <span style="color:var(--accent);font-size:0.55rem;vertical-align:middle">&#9679;</span>' : ''}</span>
             </div>
+            ${d.uploaded ? `<button class="del-btn" onclick="deleteDoc(event,${idArg})" title="Remove document">&times;</button>` : ''}
             <button class="star-btn ${favorites.has(d.id)?'starred':''}"
-              onclick="toggleFav(event,${d.id})"
+              onclick="toggleFav(event,${idArg})"
               title="${favorites.has(d.id)?'Remove from favorites':'Add to favorites'}"
             >${favorites.has(d.id)?'&starf;':'&star;'}</button>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
   }).join('');
@@ -524,9 +623,19 @@ function highlight(text, term) {
 }
 
 // ── OPEN DOC ─────────────────────────────────────────────────────────────
-function openDoc(id) {
+async function openDoc(id) {
   activeId = id;
-  const doc = DOCS_DATA.find(d => d.id === id);
+  const all = getAllDocs();
+  let doc = all.find(d => d.id === id);
+
+  // For uploaded docs, get fresh data from DB for file content
+  if (doc && doc.uploaded) {
+    const dbDoc = await dbGet(id);
+    if (dbDoc) {
+      doc = { ...doc, fileData: dbDoc.fileData, fileType: dbDoc.fileType, fileName: dbDoc.fileName, html: dbDoc.html };
+    }
+  }
+
   if (!doc) return;
 
   document.getElementById('emptyState').style.display = 'none';
@@ -548,10 +657,94 @@ function openDoc(id) {
 
   updateHeaderStar(doc.id);
 
-  document.getElementById('docContent').innerHTML = doc.html;
-  document.getElementById('docContent').closest('.doc-body').scrollTop = 0;
+  // Render content based on type
+  const contentEl = document.getElementById('docContent');
 
+  if (doc.uploaded && doc.fileData) {
+    await renderUploadedDoc(doc, contentEl);
+  } else {
+    contentEl.innerHTML = doc.html || '<p style="color:var(--muted)">No content available.</p>';
+  }
+
+  document.getElementById('docContent').closest('.doc-body').scrollTop = 0;
   renderAll();
+}
+
+async function renderUploadedDoc(doc, el) {
+  const type = doc.fileType || '';
+
+  if (type === 'application/pdf' || (doc.fileName && doc.fileName.endsWith('.pdf'))) {
+    // PDF rendering
+    el.innerHTML = '<div class="pdf-viewer"><div class="pdf-loading">Loading PDF...</div></div>';
+    try {
+      const data = base64ToUint8(doc.fileData);
+      const pdf = await pdfjsLib.getDocument({ data }).promise;
+      const viewer = el.querySelector('.pdf-viewer');
+      viewer.innerHTML = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const scale = 1.5;
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pdf-page';
+        wrapper.appendChild(canvas);
+        viewer.appendChild(wrapper);
+      }
+    } catch(err) {
+      el.innerHTML = `<p style="color:#c0392b">Error rendering PDF: ${err.message}</p>`;
+    }
+  } else if (type.startsWith('image/')) {
+    // Image rendering
+    el.innerHTML = `<div class="img-viewer"><img src="data:${type};base64,${doc.fileData}" alt="${doc.name}"></div>`;
+  } else if (type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (doc.fileName && doc.fileName.endsWith('.docx'))) {
+    // DOCX rendering via mammoth
+    try {
+      const data = base64ToUint8(doc.fileData);
+      const result = await mammoth.convertToHtml({ arrayBuffer: data.buffer }, {
+        convertImage: mammoth.images.imgElement(function(image) {
+          return image.read("base64").then(function(imageBuffer) {
+            return { src: "data:" + image.contentType + ";base64," + imageBuffer };
+          });
+        })
+      });
+      el.innerHTML = result.value;
+    } catch(err) {
+      el.innerHTML = `<p style="color:#c0392b">Error rendering DOCX: ${err.message}</p>`;
+    }
+  } else if (type === 'text/html' || (doc.fileName && (doc.fileName.endsWith('.html') || doc.fileName.endsWith('.htm')))) {
+    // HTML
+    try {
+      el.innerHTML = atob(doc.fileData);
+    } catch(err) {
+      el.innerHTML = '<p style="color:#c0392b">Error rendering HTML file.</p>';
+    }
+  } else if (type.startsWith('text/') || (doc.fileName && doc.fileName.endsWith('.txt'))) {
+    // Plain text
+    try {
+      const text = atob(doc.fileData);
+      el.innerHTML = '<pre style="white-space:pre-wrap;font-family:IBM Plex Mono,monospace;font-size:0.85rem;line-height:1.7;color:var(--text)">' + escapeHtml(text) + '</pre>';
+    } catch(err) {
+      el.innerHTML = '<p style="color:#c0392b">Error rendering text file.</p>';
+    }
+  } else {
+    el.innerHTML = doc.html || '<p style="color:var(--muted)">This file type cannot be previewed. Supported formats: PDF, DOCX, images, HTML, and text files.</p>';
+  }
+}
+
+function base64ToUint8(b64) {
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ── HEADER STAR ──────────────────────────────────────────────────────────
@@ -578,12 +771,158 @@ function onSearch() {
   renderTree();
 }
 
+// ── DRAG & DROP ──────────────────────────────────────────────────────────
+const mainArea = document.getElementById('mainArea');
+const dropOverlay = document.getElementById('dropOverlay');
+let dragCounter = 0;
+
+mainArea.addEventListener('dragenter', (e) => {
+  e.preventDefault();
+  dragCounter++;
+  dropOverlay.classList.add('active');
+});
+
+mainArea.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  dragCounter--;
+  if (dragCounter <= 0) { dragCounter = 0; dropOverlay.classList.remove('active'); }
+});
+
+mainArea.addEventListener('dragover', (e) => { e.preventDefault(); });
+
+mainArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragCounter = 0;
+  dropOverlay.classList.remove('active');
+  if (e.dataTransfer.files.length) {
+    handleFileSelect(e.dataTransfer.files);
+  }
+});
+
+// ── FILE UPLOAD ──────────────────────────────────────────────────────────
+let pendingFiles = [];
+let currentFileIndex = 0;
+
+function handleFileSelect(files) {
+  pendingFiles = Array.from(files);
+  currentFileIndex = 0;
+  if (pendingFiles.length > 0) showUploadModal(pendingFiles[0]);
+}
+
+function showUploadModal(file) {
+  const ext = file.name.split('.').pop().toUpperCase();
+  const size = file.size < 1024*1024
+    ? (file.size/1024).toFixed(1) + ' KB'
+    : (file.size/(1024*1024)).toFixed(1) + ' MB';
+
+  document.getElementById('modalFilePreview').innerHTML =
+    `<span class="ftype">${ext}</span> ${file.name} <span style="margin-left:auto">${size}</span>`;
+
+  const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+  document.getElementById('uploadName').value = baseName;
+  document.getElementById('uploadRef').value = '';
+  document.getElementById('uploadDesc').value = '';
+
+  if (pendingFiles.length > 1) {
+    document.getElementById('modalFileInfo').textContent =
+      `File ${currentFileIndex + 1} of ${pendingFiles.length}`;
+    document.getElementById('modalSaveBtn').textContent =
+      currentFileIndex < pendingFiles.length - 1 ? 'Add & Next' : 'Add Document';
+  } else {
+    document.getElementById('modalFileInfo').textContent = 'Configure your document before adding it to the library.';
+    document.getElementById('modalSaveBtn').textContent = 'Add Document';
+  }
+
+  document.getElementById('uploadModal').classList.add('active');
+  document.getElementById('uploadName').focus();
+}
+
+function closeUploadModal() {
+  document.getElementById('uploadModal').classList.remove('active');
+  pendingFiles = [];
+  currentFileIndex = 0;
+  document.getElementById('fileInput').value = '';
+}
+
+async function saveUploadedDoc() {
+  const file = pendingFiles[currentFileIndex];
+  if (!file) return;
+
+  const name = document.getElementById('uploadName').value.trim() || file.name;
+  const dept = document.getElementById('uploadDept').value;
+  const ref = document.getElementById('uploadRef').value.trim();
+  const desc = document.getElementById('uploadDesc').value.trim();
+
+  // Read file as base64
+  const fileData = await readFileAsBase64(file);
+  const id = 'upload_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+
+  const doc = {
+    id,
+    dept,
+    name,
+    owner: 'Uploaded',
+    ref,
+    revised: new Date().toISOString().slice(0,10),
+    desc,
+    html: '',
+    fileType: file.type,
+    fileData,
+    fileName: file.name,
+    uploaded: true
+  };
+
+  await dbPut(doc);
+
+  // Add to in-memory list (without fileData to save memory)
+  uploadedDocs.push({
+    id, dept, name, owner: 'Uploaded', ref, revised: doc.revised,
+    desc, html: '', uploaded: true, fileType: file.type, fileName: file.name
+  });
+
+  renderAll();
+
+  // Handle multi-file
+  currentFileIndex++;
+  if (currentFileIndex < pendingFiles.length) {
+    showUploadModal(pendingFiles[currentFileIndex]);
+  } else {
+    closeUploadModal();
+    openDoc(id);
+  }
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── DELETE DOC ───────────────────────────────────────────────────────────
+async function deleteDoc(e, id) {
+  e.stopPropagation();
+  if (!confirm('Remove this uploaded document?')) return;
+  await dbDelete(id);
+  uploadedDocs = uploadedDocs.filter(d => d.id !== id);
+  favorites.delete(id);
+  saveFavs();
+  if (activeId === id) {
+    activeId = null;
+    document.getElementById('docPane').classList.remove('active');
+    document.getElementById('emptyState').style.display = '';
+  }
+  renderAll();
+}
+
 // ── RESIZE SIDEBAR ───────────────────────────────────────────────────────
 const handle = document.getElementById('resizeHandle');
-const sidebar = document.getElementById('sidebar');
+const sidebarEl = document.getElementById('sidebar');
 let drag=false, sx, sw;
-handle.addEventListener('mousedown', e => { drag=true; sx=e.clientX; sw=sidebar.offsetWidth; document.body.style.cssText='cursor:col-resize;user-select:none'; });
-document.addEventListener('mousemove', e => { if (!drag) return; sidebar.style.width = Math.max(160, Math.min(420, sw+e.clientX-sx))+'px'; });
+handle.addEventListener('mousedown', e => { drag=true; sx=e.clientX; sw=sidebarEl.offsetWidth; document.body.style.cssText='cursor:col-resize;user-select:none'; });
+document.addEventListener('mousemove', e => { if (!drag) return; sidebarEl.style.width = Math.max(160, Math.min(420, sw+e.clientX-sx))+'px'; });
 document.addEventListener('mouseup', () => { drag=false; document.body.style.cssText=''; });
 </script>
 </body>
