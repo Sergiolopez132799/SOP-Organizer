@@ -11,7 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<!-- Storage not needed — files stored as base64 in Firestore -->
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -390,7 +390,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const firestore = firebase.firestore();
-const storage = firebase.storage();
 
 // ── CURRENT USER STATE ───────────────────────────────────────────────────
 let currentUser = null;     // Firebase auth user
@@ -501,8 +500,21 @@ async function loadDocuments() {
   try {
     const snapshot = await firestore.collection('documents').orderBy('name').get();
     allDocs = [];
-    snapshot.forEach(doc => {
-      allDocs.push({ id: doc.id, ...doc.data() });
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      // Store metadata only (skip fileData to save memory)
+      allDocs.push({
+        id: docSnap.id,
+        name: data.name,
+        dept: data.dept,
+        owner: data.owner,
+        ref: data.ref,
+        revised: data.revised,
+        desc: data.desc,
+        fileType: data.fileType,
+        fileName: data.fileName,
+        uploadedBy: data.uploadedBy
+      });
     });
   } catch(e) {
     console.error('Error loading documents:', e);
@@ -687,18 +699,20 @@ async function openDoc(id) {
 
   updateHeaderStar(doc.id);
 
-  // Render content — download file from Firebase Storage
+  // Render content — fetch full doc with fileData from Firestore
   const contentEl = document.getElementById('docContent');
 
-  if (doc.storagePath) {
+  if (doc.fileType) {
     contentEl.innerHTML = '<div class="pdf-loading">Loading document...</div>';
     try {
-      const url = await storage.ref(doc.storagePath).getDownloadURL();
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-      const base64 = arrayBufferToBase64(arrayBuffer);
-      await renderUploadedDoc({ ...doc, fileData: base64 }, contentEl);
+      // Fetch the full document (including fileData) from Firestore
+      const fullSnap = await firestore.collection('documents').doc(id).get();
+      if (fullSnap.exists) {
+        const fullDoc = { id: fullSnap.id, ...fullSnap.data() };
+        await renderUploadedDoc(fullDoc, contentEl);
+      } else {
+        contentEl.innerHTML = '<p style="color:#c0392b">Document not found.</p>';
+      }
     } catch(err) {
       contentEl.innerHTML = `<p style="color:#c0392b">Error loading document: ${err.message}</p>`;
     }
@@ -710,13 +724,13 @@ async function openDoc(id) {
   renderAll();
 }
 
-function arrayBufferToBase64(buffer) {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 async function renderUploadedDoc(doc, el) {
@@ -903,16 +917,23 @@ async function saveUploadedDoc() {
   saveBtn.textContent = 'Uploading...';
 
   try {
+    // Read file as base64
+    const fileData = await readFileAsBase64(file);
+
+    // Check size — Firestore docs max ~1MB, base64 adds ~33% overhead
+    // So we limit raw file size to roughly 700KB
+    if (file.size > 700 * 1024) {
+      alert('File too large. Maximum file size is about 700 KB for direct storage. Consider compressing the file first.');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Add Document';
+      return;
+    }
+
     // Create a unique document ID
     const docRef = firestore.collection('documents').doc();
     const docId = docRef.id;
 
-    // Upload file to Firebase Storage
-    const storagePath = `documents/${docId}/${file.name}`;
-    const storageRef = storage.ref(storagePath);
-    await storageRef.put(file);
-
-    // Save metadata to Firestore
+    // Save metadata + file data to Firestore
     const docData = {
       name,
       dept,
@@ -922,7 +943,7 @@ async function saveUploadedDoc() {
       desc,
       fileType: file.type,
       fileName: file.name,
-      storagePath,
+      fileData,
       uploadedBy: currentUser.uid,
       uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -960,16 +981,6 @@ async function deleteDoc(e, id) {
   try {
     // Delete from Firestore
     await firestore.collection('documents').doc(id).delete();
-
-    // Delete from Storage
-    if (doc && doc.storagePath) {
-      try {
-        await storage.ref(doc.storagePath).delete();
-      } catch(storageErr) {
-        // File might already be gone, that's OK
-        console.warn('Storage delete warning:', storageErr);
-      }
-    }
 
     // Remove from local array
     allDocs = allDocs.filter(d => d.id !== id);
