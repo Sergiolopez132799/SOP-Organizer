@@ -1,855 +1,590 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOP Organizer</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOP Organizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-        :root {
-            --primary: #0f172a;
-            --primary-mid: #1e293b;
-            --primary-light: #334155;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --accent-soft: #eff6ff;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #0f172a;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
-            --border: #e2e8f0;
-            --border-light: #f1f5f9;
-            --success: #10b981;
-            --sidebar-w: 264px;
-            --radius: 10px;
-            --radius-lg: 14px;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
-            --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-            --shadow-md: 0 4px 12px rgba(0,0,0,.07);
-            --shadow-lg: 0 10px 40px rgba(0,0,0,.1);
-            --transition: .15s ease;
-        }
+:root{
+  --bg:#f5f3ee;
+  --surface:#ffffff;
+  --sidebar-bg:#1a1a17;
+  --sidebar-text:#c8c4b8;
+  --sidebar-muted:#6a6860;
+  --sidebar-border:#2e2e28;
+  --sidebar-hover:#252520;
+  --sidebar-active:#2d2d24;
+  --accent:#b8860b;
+  --accent-light:#d4a017;
+  --accent2:#4a7c59;
+  --text:#1a1814;
+  --muted:#7a7060;
+  --border:#ddd8ce;
+  --rule:#e8e3da;
+  --dept-pm:#b8860b;
+  --dept-ac:#8b4a4a;
+  --dept-hr:#4a7c59;
+  --dept-ex:#5a6a8a;
+  --dept-es:#7c5aaa;
+}
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-        /* ── SVG Icon Helper ── */
-        .icon-svg { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .icon-svg svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-        .icon-svg.lg svg { width: 24px; height: 24px; }
+/* ── LOGIN ── */
+#login-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:var(--sidebar-bg);position:fixed;inset:0;z-index:9999}
+#login-screen.hidden{display:none}
+.login-box{text-align:center;max-width:360px;width:90%}
+.login-box .brand-lg{font-family:'Lora',serif;font-size:1.6rem;color:#e8e4d8;letter-spacing:0.02em;margin-bottom:4px}
+.login-box .brand-lg em{color:var(--accent-light);font-style:italic}
+.login-box .login-sub{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--sidebar-muted);margin-bottom:36px}
+.login-box .login-field{position:relative;margin-bottom:16px}
+.login-box .login-label{display:block;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--sidebar-muted);margin-bottom:6px}
+.login-box input{width:100%;padding:10px 14px;background:var(--sidebar-hover);border:1px solid var(--sidebar-border);border-radius:4px;color:var(--sidebar-text);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;outline:none;transition:border-color 0.15s}
+.login-box input:focus{border-color:var(--accent)}
+.login-box input::placeholder{color:var(--sidebar-muted)}
+.login-btn{width:100%;padding:10px;background:var(--accent);border:none;border-radius:4px;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;font-weight:500;letter-spacing:0.02em;cursor:pointer;transition:background 0.15s}
+.login-btn:hover{background:var(--accent-light)}
+.login-error{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#c0392b;margin-top:12px;display:none}
+.login-glyph{font-family:'Lora',serif;font-size:3rem;color:var(--sidebar-border);margin-bottom:16px;line-height:1}
 
-        /* ── LOGIN ── */
-        #login-screen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: var(--primary);
-            position: relative;
-            overflow: hidden;
-        }
-        #login-screen::before {
-            content: '';
-            position: absolute;
-            width: 600px; height: 600px;
-            background: radial-gradient(circle, rgba(59,130,246,.15) 0%, transparent 70%);
-            top: -200px; right: -100px;
-        }
-        #login-screen::after {
-            content: '';
-            position: absolute;
-            width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(59,130,246,.1) 0%, transparent 70%);
-            bottom: -200px; left: -100px;
-        }
-        .login-box {
-            background: var(--card);
-            padding: 48px 44px;
-            border-radius: 16px;
-            box-shadow: 0 25px 60px rgba(0,0,0,.3);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            position: relative;
-            z-index: 1;
-        }
-        .login-icon {
-            width: 56px; height: 56px;
-            background: var(--accent-soft);
-            border-radius: 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .login-icon svg { width: 28px; height: 28px; stroke: var(--accent); fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-        .login-box h1 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 4px;
-            letter-spacing: -.02em;
-        }
-        .login-box .subtitle {
-            color: var(--text-secondary);
-            font-size: .875rem;
-            margin-bottom: 32px;
-        }
-        .input-group { position: relative; text-align: left; }
-        .input-group label {
-            display: block;
-            font-size: .8rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 11px 14px;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius);
-            font-size: .9rem;
-            font-family: inherit;
-            outline: none;
-            transition: border-color var(--transition), box-shadow var(--transition);
-            background: var(--bg);
-        }
-        .input-group input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
-        }
-        .login-btn {
-            width: 100%;
-            padding: 11px;
-            margin-top: 20px;
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: var(--radius);
-            font-size: .9rem;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            transition: background var(--transition), transform var(--transition);
-        }
-        .login-btn:hover { background: var(--accent-hover); }
-        .login-btn:active { transform: scale(.98); }
-        .login-error {
-            color: #ef4444;
-            font-size: .8rem;
-            margin-top: 14px;
-            display: none;
-        }
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;background:var(--sidebar-bg);border-bottom:1px solid var(--sidebar-border);flex-shrink:0}
+.brand{font-family:'Lora',serif;font-size:1.1rem;color:#e8e4d8;letter-spacing:0.02em}
+.brand em{color:var(--accent-light);font-style:italic}
+.topbar-search{display:flex;align-items:center;gap:8px;background:var(--sidebar-hover);border:1px solid var(--sidebar-border);border-radius:4px;padding:0 12px;height:32px;min-width:260px}
+.topbar-search input{background:none;border:none;outline:none;color:var(--sidebar-text);font-family:'IBM Plex Mono',monospace;font-size:0.72rem;width:100%}
+.topbar-search input::placeholder{color:var(--sidebar-muted)}
+.topbar-search .icon{color:var(--sidebar-muted);font-size:0.8rem;flex-shrink:0}
+.topbar-meta{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--sidebar-muted);text-align:right;line-height:1.7}
+.topbar-meta strong{color:var(--accent-light)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.signout-btn{background:none;border:1px solid var(--sidebar-border);border-radius:4px;padding:4px 12px;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sidebar-muted);cursor:pointer;transition:all 0.15s}
+.signout-btn:hover{border-color:var(--accent);color:var(--accent-light)}
 
-        /* ── APP SHELL ── */
-        #app { display: none; }
-        #app.active { display: flex; min-height: 100vh; }
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;overflow:hidden}
 
-        /* ── SIDEBAR ── */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--card);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            z-index: 100;
-            transition: transform .25s ease;
-        }
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-light);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .sidebar-logo {
-            width: 36px; height: 36px;
-            background: var(--accent);
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .sidebar-logo svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-        .sidebar-header .brand { flex: 1; }
-        .sidebar-header .brand h2 {
-            font-size: .9rem;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: -.01em;
-            line-height: 1.2;
-        }
-        .sidebar-header .brand span {
-            font-size: .7rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: .5px;
-            font-weight: 500;
-        }
+/* ── SIDEBAR ── */
+.sidebar{width:260px;min-width:180px;background:var(--sidebar-bg);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;border-right:1px solid var(--sidebar-border)}
+.sidebar-label{padding:14px 16px 6px;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--sidebar-muted)}
+.tree{flex:1;overflow-y:auto;padding-bottom:16px}
+.tree::-webkit-scrollbar{width:3px}
+.tree::-webkit-scrollbar-thumb{background:var(--sidebar-border)}
 
-        .sidebar-nav { flex: 1; overflow-y: auto; padding: 8px; }
-        .nav-label {
-            padding: 16px 12px 6px;
-            font-size: .68rem;
-            text-transform: uppercase;
-            letter-spacing: .8px;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            cursor: pointer;
-            border-radius: 8px;
-            font-size: .855rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            transition: all var(--transition);
-            margin-bottom: 2px;
-        }
-        .nav-item:hover { background: var(--border-light); color: var(--text); }
-        .nav-item.active {
-            background: var(--accent-soft);
-            color: var(--accent);
-        }
-        .nav-item.active .icon-svg svg { stroke: var(--accent); }
-        .nav-item .badge {
-            margin-left: auto;
-            font-size: .7rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            background: var(--border-light);
-            padding: 1px 8px;
-            border-radius: 6px;
-        }
-        .nav-item.active .badge { background: rgba(59,130,246,.12); color: var(--accent); }
+.dept-block{margin-bottom:2px}
+.dept-row{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;user-select:none;transition:background 0.12s;border-radius:3px;margin:0 5px}
+.dept-row:hover{background:var(--sidebar-hover)}
+.dept-pip{width:3px;height:16px;border-radius:2px;flex-shrink:0}
+.dept-name{font-size:0.75rem;font-weight:500;color:var(--sidebar-text);flex:1;letter-spacing:0.01em}
+.dept-badge{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--sidebar-muted);background:#252520;border:1px solid var(--sidebar-border);border-radius:8px;padding:1px 6px}
+.dept-arrow{color:var(--sidebar-muted);font-size:0.55rem;transition:transform 0.18s}
+.dept-row.open .dept-arrow{transform:rotate(90deg)}
 
-        .sidebar-footer {
-            padding: 12px 8px;
-            border-top: 1px solid var(--border-light);
-        }
-        .sidebar-footer .nav-item { color: var(--text-muted); font-size: .82rem; }
-        .sidebar-footer .nav-item:hover { color: #ef4444; background: #fef2f2; }
-        .sidebar-footer .nav-item:hover .icon-svg svg { stroke: #ef4444; }
+.doc-list{display:none;padding:2px 0 4px}
+.doc-list.open{display:block}
+.doc-row{display:flex;align-items:center;justify-content:space-between;gap:0;padding:5px 14px 5px 32px;cursor:pointer;transition:all 0.12s;position:relative;margin:0 5px;border-radius:3px}
+.doc-row::before{content:'';position:absolute;left:20px;top:50%;width:6px;height:1px;background:var(--sidebar-border)}
+.doc-row:hover{background:var(--sidebar-hover)}
+.doc-row:hover .doc-name{color:var(--sidebar-text)}
+.doc-row.active{background:var(--sidebar-active);border-left:2px solid var(--accent-light);padding-left:30px}
+.doc-row.active .doc-name{color:var(--accent-light)}
+.doc-name{font-size:0.72rem;color:var(--sidebar-muted);line-height:1.3}
 
-        /* ── MAIN ── */
-        .main {
-            flex: 1;
-            margin-left: var(--sidebar-w);
-            padding: 32px 40px;
-            max-width: 1000px;
-        }
+.doc-row-left{display:flex;align-items:center;gap:0;flex:1;min-width:0;position:relative}
+.doc-row-left::before{content:'';position:absolute;left:-12px;top:50%;width:6px;height:1px;background:var(--sidebar-border)}
 
-        .page-header { margin-bottom: 28px; }
-        .page-header .breadcrumb {
-            font-size: .8rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .page-header .breadcrumb a {
-            color: var(--accent);
-            text-decoration: none;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .page-header .breadcrumb a:hover { text-decoration: underline; }
-        .page-header .breadcrumb .sep { color: var(--border); }
-        .page-header h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: -.02em;
-            margin-top: 2px;
-        }
-        .page-header .page-desc {
-            color: var(--text-secondary);
-            font-size: .88rem;
-            margin-top: 4px;
-        }
+/* ── RESIZE ── */
+.resize-handle{width:3px;background:var(--sidebar-border);cursor:col-resize;flex-shrink:0;transition:background 0.15s}
+.resize-handle:hover{background:var(--accent)}
 
-        .header-row {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
+/* ── MAIN CONTENT ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 
-        /* Search */
-        .search-bar {
-            display: flex;
-            align-items: center;
-            background: var(--card);
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius);
-            padding: 8px 12px;
-            gap: 8px;
-            min-width: 240px;
-            transition: border-color var(--transition), box-shadow var(--transition);
-        }
-        .search-bar:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(59,130,246,.1);
-        }
-        .search-bar svg { width: 18px; height: 18px; stroke: var(--text-muted); fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-        .search-bar input {
-            border: none;
-            outline: none;
-            font-size: .875rem;
-            font-family: inherit;
-            width: 100%;
-            background: transparent;
-            color: var(--text);
-        }
-        .search-bar input::placeholder { color: var(--text-muted); }
+/* ── EMPTY STATE ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--muted);text-align:center;padding:40px}
+.empty-glyph{font-family:'Lora',serif;font-size:4rem;color:var(--border);line-height:1}
+.empty-state h2{font-family:'Lora',serif;font-size:1.3rem;font-weight:400;font-style:italic;color:var(--muted)}
+.empty-state p{font-size:0.78rem;line-height:1.8;max-width:360px;color:var(--muted)}
 
-        /* Stats */
-        .stats-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 28px;
-        }
-        .stat-chip {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 14px;
-            font-size: .8rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
-        .stat-chip .stat-num {
-            font-weight: 700;
-            color: var(--text);
-            font-size: .9rem;
-        }
+/* ── DOC PANE ── */
+.doc-pane{display:none;flex-direction:column;height:100%;overflow:hidden}
+.doc-pane.active{display:flex}
 
-        /* Dept Grid */
-        .dept-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-        }
-        .dept-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            cursor: pointer;
-            transition: all var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-        .dept-card:hover {
-            box-shadow: var(--shadow-md);
-            border-color: var(--accent);
-            transform: translateY(-1px);
-        }
-        .dept-card .card-icon-wrap {
-            width: 44px; height: 44px;
-            border-radius: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 16px;
-        }
-        .dept-card .card-icon-wrap svg { width: 22px; height: 22px; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; fill: none; }
-        .dept-card h3 {
-            font-size: .95rem;
-            font-weight: 650;
-            color: var(--text);
-            margin-bottom: 4px;
-            letter-spacing: -.01em;
-        }
-        .dept-card p {
-            font-size: .8rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-        .dept-card .card-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid var(--border-light);
-        }
-        .dept-card .sop-count {
-            font-size: .75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-        .dept-card .card-arrow { color: var(--text-muted); transition: color var(--transition), transform var(--transition); }
-        .dept-card .card-arrow svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .dept-card:hover .card-arrow { color: var(--accent); transform: translateX(2px); }
+.doc-header{background:var(--bg);border-bottom:1px solid var(--rule);padding:20px 36px 16px;flex-shrink:0}
+.doc-crumb{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.doc-crumb .sep{color:var(--border)}
+.doc-crumb .curr{color:var(--accent)}
+.doc-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:14px}
+.doc-title{font-family:'Lora',serif;font-size:1.6rem;font-weight:600;color:var(--text);line-height:1.2}
+.dept-tag{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;padding:3px 10px;border-radius:3px;color:white;text-transform:uppercase;letter-spacing:0.08em;flex-shrink:0;margin-top:5px}
+.meta-row{display:flex;gap:24px;flex-wrap:wrap}
+.meta-item{display:flex;flex-direction:column;gap:2px}
+.meta-item .ml{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)}
+.meta-item .mv{font-size:0.75rem;color:var(--text)}
 
-        /* Color accents per dept */
-        .dept-pm .card-icon-wrap { background: #eff6ff; }
-        .dept-pm .card-icon-wrap svg { stroke: #3b82f6; }
-        .dept-ac .card-icon-wrap { background: #f0fdf4; }
-        .dept-ac .card-icon-wrap svg { stroke: #22c55e; }
-        .dept-hr .card-icon-wrap { background: #fef3c7; }
-        .dept-hr .card-icon-wrap svg { stroke: #f59e0b; }
-        .dept-ex .card-icon-wrap { background: #fae8ff; }
-        .dept-ex .card-icon-wrap svg { stroke: #a855f7; }
-        .dept-es .card-icon-wrap { background: #fef2f2; }
-        .dept-es .card-icon-wrap svg { stroke: #ef4444; }
+/* ── DESCRIPTION STRIP ── */
+.desc-strip{background:#faf8f4;border-bottom:1px solid var(--rule);padding:12px 36px;font-size:0.78rem;line-height:1.7;color:var(--muted);font-style:italic;flex-shrink:0}
 
-        /* SOP List */
-        .sop-list { display: flex; flex-direction: column; gap: 8px; }
-        .sop-item {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 20px;
-            cursor: pointer;
-            transition: all var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .sop-item:hover {
-            border-color: var(--accent);
-            box-shadow: var(--shadow-sm);
-        }
-        .sop-item .sop-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            flex-shrink: 0;
-        }
-        .sop-item .sop-info { flex: 1; min-width: 0; }
-        .sop-item .sop-info h4 {
-            font-size: .88rem;
-            font-weight: 600;
-            color: var(--text);
-            letter-spacing: -.01em;
-        }
-        .sop-item .sop-info p {
-            font-size: .78rem;
-            color: var(--text-secondary);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .sop-item .sop-meta {
-            font-size: .73rem;
-            color: var(--text-muted);
-            text-align: right;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
+/* ── DOCUMENT BODY ── */
+.doc-body{flex:1;overflow-y:auto;padding:32px 36px 48px;background:var(--surface)}
+.doc-body::-webkit-scrollbar{width:5px}
+.doc-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
-        /* SOP Detail */
-        .sop-detail {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 36px;
-        }
-        .sop-detail h2 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: -.02em;
-            margin-bottom: 12px;
-        }
-        .sop-detail .meta-row {
-            display: flex;
-            gap: 20px;
-            font-size: .78rem;
-            color: var(--text-muted);
-            margin-bottom: 24px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-light);
-            flex-wrap: wrap;
-        }
-        .sop-detail .meta-row .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .sop-detail .meta-row .meta-item svg { width: 14px; height: 14px; stroke: var(--text-muted); fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-        .sop-detail .sop-body { font-size: .9rem; line-height: 1.85; color: var(--text); }
-        .sop-detail .sop-body h3 {
-            margin-top: 24px;
-            margin-bottom: 8px;
-            color: var(--text);
-            font-size: .95rem;
-            font-weight: 650;
-            letter-spacing: -.01em;
-        }
-        .sop-detail .sop-body p { margin-bottom: 8px; color: var(--text-secondary); }
-        .sop-detail .sop-body ol, .sop-detail .sop-body ul { padding-left: 20px; margin: 8px 0; }
-        .sop-detail .sop-body li { margin-bottom: 6px; color: var(--text-secondary); }
+/* ── RENDERED DOC STYLES ── */
+.doc-content{max-width:780px;margin:0 auto}
+.doc-content p{font-size:0.9rem;line-height:1.85;color:var(--text);margin-bottom:1rem}
+.doc-content h1{font-family:'Lora',serif;font-size:1.5rem;font-weight:600;color:var(--text);margin:2rem 0 0.75rem;padding-bottom:0.5rem;border-bottom:2px solid var(--accent);line-height:1.3}
+.doc-content h2{font-family:'Lora',serif;font-size:1.15rem;font-weight:600;color:var(--text);margin:1.75rem 0 0.6rem}
+.doc-content h3{font-size:0.92rem;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--accent);margin:1.5rem 0 0.5rem}
+.doc-content strong{font-weight:600;color:var(--text)}
+.doc-content em{font-style:italic}
+.doc-content ul,.doc-content ol{margin:0.5rem 0 1rem 1.5rem;padding:0}
+.doc-content li{font-size:0.88rem;line-height:1.75;color:var(--text);margin-bottom:0.2rem}
+.doc-content li p{margin-bottom:0.2rem}
+.doc-content table{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:0.82rem}
+.doc-content th{background:#f0ece4;font-weight:500;text-align:left;padding:8px 12px;border:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)}
+.doc-content td{padding:7px 12px;border:1px solid var(--border);vertical-align:top;line-height:1.6}
+.doc-content tr:nth-child(even) td{background:#faf8f4}
+.doc-content img{max-width:100%;height:auto;border:1px solid var(--border);border-radius:4px;margin:1.5rem 0;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.doc-content a{color:var(--accent);text-decoration:underline}
+.doc-content hr{border:none;border-top:1px solid var(--rule);margin:2rem 0}
+.doc-content code{font-family:'IBM Plex Mono',monospace;font-size:0.82em;background:#f0ece4;padding:1px 5px;border-radius:3px}
 
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: .82rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-weight: 500;
-            margin-bottom: 20px;
-            padding: 6px 12px;
-            border-radius: 8px;
-            transition: all var(--transition);
-        }
-        .back-btn:hover { background: var(--border-light); color: var(--text); }
-        .back-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* ── DEPT COLORS ── */
+.pip-pm,.tag-pm{background:var(--dept-pm)}
+.pip-ac,.tag-ac{background:var(--dept-ac)}
+.pip-hr,.tag-hr{background:var(--dept-hr)}
+.pip-ex,.tag-ex{background:var(--dept-ex)}
+.pip-es,.tag-es{background:var(--dept-es)}
 
-        /* Empty */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-        .empty-state .empty-icon-wrap {
-            width: 56px; height: 56px;
-            background: var(--border-light);
-            border-radius: 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 14px;
-        }
-        .empty-state .empty-icon-wrap svg { width: 24px; height: 24px; stroke: var(--text-muted); fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-        .empty-state p { font-size: .88rem; }
+/* ── PRINT ── */
+@media print{
+  .topbar,.sidebar,.resize-handle,.desc-strip,#login-screen{display:none!important}
+  .layout{display:block}
+  .doc-pane{display:block!important;height:auto;overflow:visible}
+  .doc-body{overflow:visible;padding:0}
+  .doc-header{border:none;padding:0 0 16px}
+  .empty-state{display:none}
+}
 
-        /* Mobile */
-        .menu-toggle {
-            display: none;
-            position: fixed;
-            top: 14px; left: 14px;
-            z-index: 200;
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: var(--radius);
-            padding: 8px 10px;
-            cursor: pointer;
-            box-shadow: var(--shadow);
-        }
-        .menu-toggle svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; display: block; }
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.3);
-            z-index: 99;
-        }
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); box-shadow: var(--shadow-lg); }
-            .sidebar.open { transform: translateX(0); }
-            .sidebar.open + .sidebar-overlay { display: block; }
-            .main { margin-left: 0; padding: 20px 16px; padding-top: 64px; }
-            .menu-toggle { display: block; }
-            .dept-grid { grid-template-columns: 1fr; }
-            .stats-row { flex-wrap: wrap; }
-        }
-    </style>
+/* ── SEARCH HIGHLIGHT ── */
+mark{background:#fff0a0;border-radius:2px;padding:0 2px}
+
+/* ── FAVORITES ── */
+.star-btn{background:none;border:none;cursor:pointer;color:var(--sidebar-border);font-size:0.75rem;padding:0 2px 0 6px;flex-shrink:0;line-height:1;transition:color 0.15s,transform 0.15s;opacity:0}
+.doc-row:hover .star-btn{opacity:1}
+.star-btn.starred{color:var(--accent-light);opacity:1}
+.star-btn:hover{transform:scale(1.2)}
+
+.fav-section{border-bottom:1px solid var(--sidebar-border);margin-bottom:6px;padding-bottom:6px}
+.fav-section.empty{display:none}
+.fav-label{padding:12px 16px 4px;font-family:'IBM Plex Mono',monospace;font-size:0.58rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--accent-light);display:flex;align-items:center;gap:6px}
+.fav-label .fav-icon{font-size:0.65rem}
+.fav-row{display:flex;align-items:center;justify-content:space-between;padding:5px 14px 5px 16px;cursor:pointer;transition:all 0.12s;border-radius:3px;margin:0 5px;gap:6px}
+.fav-row:hover{background:var(--sidebar-hover)}
+.fav-row.active{background:var(--sidebar-active);border-left:2px solid var(--accent-light);padding-left:14px}
+.fav-row.active .fav-name{color:var(--accent-light)}
+.fav-name{font-size:0.72rem;color:var(--sidebar-muted);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav-row:hover .fav-name{color:var(--sidebar-text)}
+.fav-dept-pip{width:3px;height:10px;border-radius:2px;flex-shrink:0}
+.fav-unstar{background:none;border:none;cursor:pointer;color:var(--accent-light);font-size:0.65rem;padding:0 2px;opacity:0.6;transition:opacity 0.15s;flex-shrink:0}
+.fav-unstar:hover{opacity:1}
+</style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN SCREEN -->
 <div id="login-screen">
-    <div class="login-box">
-        <div class="login-icon">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        </div>
-        <h1>SOP Organizer</h1>
-        <p class="subtitle">Standard Operating Procedures Portal</p>
-        <div class="input-group">
-            <label for="pwd-input">Password</label>
-            <input type="password" id="pwd-input" placeholder="Enter access password" autocomplete="off">
-        </div>
-        <button class="login-btn" onclick="checkPassword()">Sign In</button>
-        <div class="login-error" id="login-error">Incorrect password. Please try again.</div>
+  <div class="login-box">
+    <div class="login-glyph">&sect;</div>
+    <div class="brand-lg">SOP Organizer</div>
+    <div class="login-sub">Standard Operating Procedures</div>
+    <div class="login-field">
+      <label class="login-label" for="pwd-input">Password</label>
+      <input type="password" id="pwd-input" placeholder="Enter access password" autocomplete="off">
     </div>
+    <button class="login-btn" onclick="checkPassword()">Sign In</button>
+    <div class="login-error" id="login-error">Incorrect password. Please try again.</div>
+  </div>
 </div>
 
 <!-- APP -->
-<button class="menu-toggle" onclick="toggleSidebar()">
-    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-</button>
-<div id="app">
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
-            <div class="brand">
-                <h2>SOP Organizer</h2>
-                <span>Construction Co.</span>
-            </div>
+<div class="topbar">
+  <div class="brand">SOP Organizer</div>
+  <div class="topbar-search">
+    <span class="icon">&x2315;</span>
+    <input type="text" id="searchInput" placeholder="Search documents..." oninput="onSearch()">
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-meta">
+      <div>Construction Company</div>
+      <div><strong id="docCountLabel">10 documents</strong> &middot; 5 departments</div>
+    </div>
+    <button class="signout-btn" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar" id="sidebar">
+    <div class="fav-section" id="favSection">
+      <div class="fav-label"><span class="fav-icon">&starf;</span> Favorites</div>
+      <div id="favList"></div>
+    </div>
+    <div class="sidebar-label">Standard Operating Procedures</div>
+    <div class="tree" id="tree"></div>
+  </div>
+
+  <div class="resize-handle" id="resizeHandle"></div>
+
+  <div class="main">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-glyph">&sect;</div>
+      <h2>Select a document to read</h2>
+      <p>All standard operating procedures are organized by department in the sidebar. Click any document to open it.</p>
+    </div>
+
+    <div class="doc-pane" id="docPane">
+      <div class="doc-header">
+        <div class="doc-crumb"><span id="crumbDept">&mdash;</span><span class="sep">&rsaquo;</span><span class="curr" id="crumbName">&mdash;</span></div>
+        <div class="doc-title-row">
+          <div class="doc-title" id="docTitle">&mdash;</div>
+          <div class="dept-tag" id="deptTag">&mdash;</div>
         </div>
-        <div class="sidebar-nav">
-            <div class="nav-label">Main</div>
-            <div class="nav-item active" onclick="showHome()" data-nav="home">
-                <span class="icon-svg"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
-                Dashboard
-            </div>
-            <div class="nav-label">Departments</div>
-            <div id="nav-departments"></div>
+        <div class="meta-row">
+          <div class="meta-item"><div class="ml">Department</div><div class="mv" id="metaDept">&mdash;</div></div>
+          <div class="meta-item"><div class="ml">Reference</div><div class="mv" id="metaRef">&mdash;</div></div>
+          <div class="meta-item"><div class="ml">Owner</div><div class="mv" id="metaOwner">&mdash;</div></div>
+          <div class="meta-item"><div class="ml">Revised</div><div class="mv" id="metaRevised">&mdash;</div></div>
         </div>
-        <div class="sidebar-footer">
-            <div class="nav-item" onclick="logout()">
-                <span class="icon-svg"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
-                Sign Out
-            </div>
-        </div>
-    </nav>
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <div class="main" id="main-content"></div>
+      </div>
+      <div class="desc-strip" id="docDesc">&mdash;</div>
+      <div class="doc-body">
+        <div class="doc-content" id="docContent"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-// ── ICONS ──
-const icons = {
-    'project-management': '<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
-    'accounting': '<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
-    'human-resources': '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-    'executive': '<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
-    'estimating': '<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
-    doc: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
-    search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
-    calendar: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
-    user: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-    building: '<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
-    arrowLeft: '<svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
-    arrowRight: '<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>',
-    folder: '<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
-};
-const deptClasses = { 'project-management':'dept-pm','accounting':'dept-ac','human-resources':'dept-hr','executive':'dept-ex','estimating':'dept-es' };
-
-// ── DATA ──
+// ── AUTH ──────────────────────────────────────────────────────────────────
 const PASSWORD_HASH = "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8";
 
-const departments = [
-    {
-        id: "project-management", name: "Project Management",
-        description: "SOPs for project planning, scheduling, budgets, and site coordination.",
-        sops: [
-            { id: "pm-001", title: "SOP-PM-001: Project Kickoff Procedure", summary: "Steps for initiating a new construction project, including stakeholder meetings and document setup.", revised: "2026-01-15", author: "TBD", body: `<h3>1. Purpose</h3><p>Establish a standardized process for kicking off new construction projects to ensure all teams are aligned from day one.</p><h3>2. Scope</h3><p>Applies to all new projects valued over $50,000.</p><h3>3. Procedure</h3><ol><li>Project Manager receives signed contract from Estimating.</li><li>Schedule kickoff meeting within 5 business days.</li><li>Distribute project binder (scope, schedule, budget, contacts).</li><li>Assign roles and responsibilities to team members.</li><li>Conduct site visit with superintendent.</li><li>Enter project into project management software.</li></ol><h3>4. References</h3><p>Company Project Management Handbook, Section 3.</p>` },
-            { id: "pm-002", title: "SOP-PM-002: Change Order Processing", summary: "Procedure for documenting, approving, and tracking change orders.", revised: "2026-02-10", author: "TBD", body: `<h3>1. Purpose</h3><p>Define the process for handling change orders to protect project scope and budget.</p><h3>2. Procedure</h3><ol><li>Identify scope change and document with photos/notes.</li><li>Submit Change Order Request form to Project Manager.</li><li>PM reviews and obtains cost estimate from Estimating.</li><li>Submit to client for written approval.</li><li>Update project schedule and budget upon approval.</li><li>File approved change order in project documentation.</li></ol>` }
-        ]
-    },
-    {
-        id: "accounting", name: "Accounting",
-        description: "SOPs for invoicing, payroll, accounts payable/receivable, and financial reporting.",
-        sops: [
-            { id: "ac-001", title: "SOP-AC-001: Invoice Submission Process", summary: "Standard procedure for submitting progress invoices and tracking payments.", revised: "2026-01-20", author: "TBD", body: `<h3>1. Purpose</h3><p>Ensure timely and accurate billing for all active projects.</p><h3>2. Procedure</h3><ol><li>Project Manager submits monthly progress report by the 25th.</li><li>Accounting prepares invoice based on percentage of completion.</li><li>Invoice reviewed and approved by PM and Director.</li><li>Submit invoice to client via email and mail.</li><li>Log invoice in accounts receivable tracker.</li><li>Follow up on unpaid invoices after 30 days.</li></ol>` },
-            { id: "ac-002", title: "SOP-AC-002: Expense Report Approval", summary: "Process for submitting and approving employee expense reports.", revised: "2026-03-01", author: "TBD", body: `<h3>1. Purpose</h3><p>Standardize the expense reimbursement process across all departments.</p><h3>2. Procedure</h3><ol><li>Employee completes expense report with itemized receipts.</li><li>Submit to direct supervisor within 14 days of expense.</li><li>Supervisor reviews and signs off.</li><li>Forward to Accounting for processing.</li><li>Reimbursement issued within 10 business days.</li></ol>` }
-        ]
-    },
-    {
-        id: "human-resources", name: "Human Resources",
-        description: "SOPs for hiring, onboarding, training, benefits, and employee relations.",
-        sops: [
-            { id: "hr-001", title: "SOP-HR-001: New Hire Onboarding", summary: "Complete onboarding procedure for all new employees, including safety orientation.", revised: "2026-02-01", author: "TBD", body: `<h3>1. Purpose</h3><p>Provide a consistent onboarding experience for every new employee.</p><h3>2. Procedure</h3><ol><li>HR sends offer letter and pre-employment paperwork.</li><li>Complete background check and drug screening.</li><li>Schedule Day 1 orientation (safety training, handbook review, IT setup).</li><li>Assign buddy/mentor from the employee's department.</li><li>Complete required OSHA and company safety certifications within 30 days.</li><li>30-day check-in with HR and supervisor.</li></ol>` },
-            { id: "hr-002", title: "SOP-HR-002: Incident Reporting", summary: "Procedure for reporting workplace injuries and near-miss incidents.", revised: "2026-01-10", author: "TBD", body: `<h3>1. Purpose</h3><p>Ensure all workplace incidents are reported, documented, and investigated promptly.</p><h3>2. Procedure</h3><ol><li>Secure the scene and provide first aid or call emergency services.</li><li>Notify supervisor immediately.</li><li>Complete Incident Report Form within 24 hours.</li><li>Submit form to HR and Safety Director.</li><li>Investigation conducted within 48 hours.</li><li>Corrective actions documented and implemented.</li><li>File OSHA reports if applicable.</li></ol>` }
-        ]
-    },
-    {
-        id: "executive", name: "Executive",
-        description: "SOPs for strategic planning, company policies, compliance, and leadership directives.",
-        sops: [
-            { id: "ex-001", title: "SOP-EX-001: Annual Strategic Planning", summary: "Process for conducting the annual strategic planning session and goal-setting.", revised: "2025-12-15", author: "TBD", body: `<h3>1. Purpose</h3><p>Establish the company's strategic direction and annual goals through a structured planning process.</p><h3>2. Procedure</h3><ol><li>CEO initiates planning cycle in Q4.</li><li>Department heads submit performance reviews and projections.</li><li>Executive team conducts 2-day offsite planning session.</li><li>Define company-wide goals, KPIs, and budget allocations.</li><li>Communicate plan to all employees within 30 days.</li><li>Quarterly reviews to track progress against goals.</li></ol>` },
-            { id: "ex-002", title: "SOP-EX-002: Policy Revision & Approval", summary: "Procedure for proposing, reviewing, and approving changes to company-wide policies.", revised: "2026-02-20", author: "TBD", body: `<h3>1. Purpose</h3><p>Ensure all company policies are reviewed, approved, and distributed in a controlled manner.</p><h3>2. Procedure</h3><ol><li>Policy change proposed via Policy Revision Request form.</li><li>Legal and compliance review (if applicable).</li><li>Executive committee review and vote.</li><li>Approved policies updated in the company handbook.</li><li>All employees notified and acknowledge receipt.</li><li>Old versions archived with revision history.</li></ol>` }
-        ]
-    },
-    {
-        id: "estimating", name: "Estimating",
-        description: "SOPs for bid preparation, cost estimation, takeoffs, and proposal submissions.",
-        sops: [
-            { id: "es-001", title: "SOP-ES-001: Bid Preparation Process", summary: "Standard procedure for preparing and submitting project bids.", revised: "2026-01-25", author: "TBD", body: `<h3>1. Purpose</h3><p>Standardize the bid preparation process to ensure accurate, competitive, and timely proposals.</p><h3>2. Procedure</h3><ol><li>Receive bid invitation and log in bid tracking system.</li><li>Conduct plan review and site visit within 3 days.</li><li>Complete quantity takeoff using estimating software.</li><li>Request subcontractor and material quotes.</li><li>Build estimate with labor, materials, equipment, overhead, and profit.</li><li>Senior Estimator reviews and approves final numbers.</li><li>Submit bid before deadline with required bonds/documents.</li></ol>` },
-            { id: "es-002", title: "SOP-ES-002: Cost Database Maintenance", summary: "Procedure for updating and maintaining the company's unit cost database.", revised: "2026-03-05", author: "TBD", body: `<h3>1. Purpose</h3><p>Keep the estimating cost database accurate and reflective of current market conditions.</p><h3>2. Procedure</h3><ol><li>Review cost database quarterly against actual project costs.</li><li>Update unit costs for labor, materials, and equipment.</li><li>Document sources for all cost updates.</li><li>Flag items with variance greater than 10% for review.</li><li>Archive previous cost data for historical reference.</li><li>Distribute updated database to all estimators.</li></ol>` }
-        ]
-    }
-];
-
-// ── AUTH ──
 async function sha1(str) {
-    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
+
 async function checkPassword() {
-    const pwd = document.getElementById('pwd-input').value;
-    const hash = await sha1(pwd);
-    if (hash === PASSWORD_HASH) {
-        sessionStorage.setItem('sop_auth', '1');
-        enterApp();
-    } else {
-        document.getElementById('login-error').style.display = 'block';
-        document.getElementById('pwd-input').value = '';
-        document.getElementById('pwd-input').focus();
-    }
+  const pwd = document.getElementById('pwd-input').value;
+  const hash = await sha1(pwd);
+  if (hash === PASSWORD_HASH) {
+    sessionStorage.setItem('sop_auth', '1');
+    enterApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
 }
+
 document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+
 function logout() { sessionStorage.removeItem('sop_auth'); location.reload(); }
+
 function enterApp() {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').classList.add('active');
-    buildNav();
-    showHome();
+  document.getElementById('login-screen').classList.add('hidden');
+  loadFavs();
+  renderAll();
 }
+
 if (sessionStorage.getItem('sop_auth')) enterApp();
 
-// ── NAV ──
-function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('open');
-}
-function buildNav() {
-    document.getElementById('nav-departments').innerHTML = departments.map(d => `
-        <div class="nav-item" onclick="showDepartment('${d.id}')" data-nav="${d.id}">
-            <span class="icon-svg">${icons[d.id]}</span> ${d.name}
-            <span class="badge">${d.sops.length}</span>
-        </div>
-    `).join('');
-}
-function setActiveNav(id) {
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    const t = document.querySelector(`[data-nav="${id}"]`);
-    if (t) t.classList.add('active');
-    document.getElementById('sidebar').classList.remove('open');
+// ── DATA ─────────────────────────────────────────────────────────────────
+const DOCS_DATA = [
+  {
+    id: 1,
+    dept: "Project Management",
+    name: "Project Kickoff Procedure",
+    owner: "Project Management Dept.",
+    ref: "SOP-PM-001",
+    revised: "2026-01-15",
+    desc: "Standardized process for initiating new construction projects, including stakeholder alignment, document distribution, and project setup.",
+    html: `<h1>Project Kickoff Procedure</h1><h3>1. Purpose</h3><p>Establish a standardized process for kicking off new construction projects to ensure all teams are aligned from day one. A consistent kickoff process reduces miscommunication, sets clear expectations, and ensures no critical steps are missed during the transition from pre-construction to active project management.</p><h3>2. Scope</h3><p>This procedure applies to all new construction projects valued over $50,000. For projects under this threshold, a simplified kickoff checklist may be used at the Project Manager's discretion.</p><h3>3. Procedure</h3><ol><li><strong>Receive signed contract from Estimating.</strong> The Project Manager receives the executed contract package, including the owner agreement, scope of work, and approved budget from the Estimating department.</li><li><strong>Schedule kickoff meeting within 5 business days.</strong> Coordinate with all key stakeholders including the Superintendent, Project Engineer, Estimator, and relevant subcontractors to schedule the internal kickoff meeting.</li><li><strong>Distribute project binder.</strong> Prepare and distribute the project binder containing: scope of work, project schedule, approved budget, contact directory, site logistics plan, and relevant permits.</li><li><strong>Assign roles and responsibilities.</strong> Clearly define and communicate roles for all team members. Document assignments in the project management system and distribute to the team.</li><li><strong>Conduct site visit with Superintendent.</strong> Perform a comprehensive site walk with the Superintendent to review existing conditions, access points, staging areas, and any site-specific safety concerns.</li><li><strong>Enter project into project management software.</strong> Create the project in the PM system with all relevant data: budget codes, schedule milestones, contact information, and document control structure.</li></ol><h3>4. References</h3><p>Company Project Management Handbook, Section 3. See also SOP-PM-002 for Change Order Processing procedures that may arise during project execution.</p>`
+  },
+  {
+    id: 2,
+    dept: "Project Management",
+    name: "Change Order Processing",
+    owner: "Project Management Dept.",
+    ref: "SOP-PM-002",
+    revised: "2026-02-10",
+    desc: "Procedure for identifying, documenting, approving, and tracking change orders to protect project scope and budget integrity.",
+    html: `<h1>Change Order Processing</h1><h3>1. Purpose</h3><p>Define the process for handling change orders to protect project scope and budget. Proper change order management ensures that all scope modifications are documented, priced, approved, and tracked to prevent budget overruns and scope disputes.</p><h3>2. Scope</h3><p>This procedure applies to all active construction projects. Any modification to the original contract scope, schedule, or budget must follow this process regardless of the dollar amount.</p><h3>3. Procedure</h3><ol><li><strong>Identify scope change and document.</strong> When a scope change is identified by any team member, document it immediately with photographs, field notes, and a written description of the changed condition or owner request.</li><li><strong>Submit Change Order Request form to Project Manager.</strong> Complete the standard Change Order Request (COR) form and submit to the PM within 48 hours of identifying the change. Include all supporting documentation.</li><li><strong>PM reviews and obtains cost estimate from Estimating.</strong> The Project Manager reviews the COR for completeness, then coordinates with the Estimating department to develop a detailed cost estimate including labor, materials, equipment, subcontractor costs, overhead, and profit.</li><li><strong>Submit to client for written approval.</strong> Present the fully documented change order proposal to the client. No work on the changed scope shall proceed until written approval is received from the client or their authorized representative.</li><li><strong>Update project schedule and budget upon approval.</strong> Once approved, immediately update the project schedule, budget, and all tracking documents. Notify all affected team members and subcontractors of the approved changes.</li><li><strong>File approved change order in project documentation.</strong> Maintain the complete change order record including the original COR, cost estimate, client approval, and any related correspondence in the project document control system.</li></ol>`
+  },
+  {
+    id: 3,
+    dept: "Accounting",
+    name: "Invoice Submission Process",
+    owner: "Accounting Dept.",
+    ref: "SOP-AC-001",
+    revised: "2026-01-20",
+    desc: "Standard procedure for preparing and submitting monthly progress invoices, tracking accounts receivable, and managing payment follow-up.",
+    html: `<h1>Invoice Submission Process</h1><h3>1. Purpose</h3><p>Ensure timely and accurate billing for all active projects. Consistent invoicing practices maintain healthy cash flow, reduce disputes with clients, and provide accurate financial reporting for project performance analysis.</p><h3>2. Scope</h3><p>This procedure applies to all active projects with billable work. Both GMP (Guaranteed Maximum Price) and Stipulated Sum projects follow this process, with format variations noted where applicable.</p><h3>3. Procedure</h3><ol><li><strong>Project Manager submits monthly progress report by the 25th.</strong> The PM completes the monthly progress report detailing percentage of completion for each schedule of values line item, including supporting documentation for work completed during the billing period.</li><li><strong>Accounting prepares invoice based on percentage of completion.</strong> Using the PM's progress report, the accounting team prepares the formal invoice package including the G702 Application for Payment, G703 Continuation Sheet, and any required lien releases.</li><li><strong>Invoice reviewed and approved by PM and Director.</strong> The draft invoice is routed to the Project Manager for accuracy review and then to the Director for final approval before submission to the client.</li><li><strong>Submit invoice to client via email and mail.</strong> The approved invoice package is submitted to the client through their preferred method, typically both email and certified mail. Record the submission date and method in the billing log.</li><li><strong>Log invoice in accounts receivable tracker.</strong> Enter the invoice details into the AR tracking system including invoice number, amount, submission date, and expected payment date based on contract terms.</li><li><strong>Follow up on unpaid invoices after 30 days.</strong> If payment is not received within the contract payment terms (typically Net 30), initiate the collections follow-up process: email reminder at 30 days, phone call at 45 days, formal demand letter at 60 days.</li></ol>`
+  },
+  {
+    id: 4,
+    dept: "Accounting",
+    name: "Expense Report Approval",
+    owner: "Accounting Dept.",
+    ref: "SOP-AC-002",
+    revised: "2026-03-01",
+    desc: "Process for submitting, reviewing, and approving employee expense reports to ensure timely reimbursement and proper cost allocation.",
+    html: `<h1>Expense Report Approval</h1><h3>1. Purpose</h3><p>Standardize the expense reimbursement process across all departments. A consistent process ensures that employees are reimbursed promptly, expenses are properly coded to the correct projects or overhead accounts, and the company maintains adequate documentation for audit purposes.</p><h3>2. Scope</h3><p>This procedure applies to all employees submitting expense reports for business-related expenditures including travel, meals, supplies, and other pre-approved expenses.</p><h3>3. Procedure</h3><ol><li><strong>Employee completes expense report with itemized receipts.</strong> Using the standard expense report form, the employee lists each expense with the date, vendor, amount, business purpose, and project code. Original receipts must be attached for all expenses over $25.</li><li><strong>Submit to direct supervisor within 14 days of expense.</strong> The completed expense report must be submitted to the employee's direct supervisor within 14 calendar days of the expense being incurred. Late submissions may delay reimbursement.</li><li><strong>Supervisor reviews and signs off.</strong> The supervisor verifies that all expenses are legitimate business expenses, properly documented, and coded to the correct project or overhead account. The supervisor signs the report indicating approval.</li><li><strong>Forward to Accounting for processing.</strong> The approved expense report is forwarded to the Accounting department for data entry, coding verification, and payment processing.</li><li><strong>Reimbursement issued within 10 business days.</strong> Accounting processes the approved expense report and issues reimbursement to the employee within 10 business days via direct deposit or company check.</li></ol>`
+  },
+  {
+    id: 5,
+    dept: "Human Resources",
+    name: "New Hire Onboarding",
+    owner: "Human Resources Dept.",
+    ref: "SOP-HR-001",
+    revised: "2026-02-01",
+    desc: "Complete onboarding procedure for all new employees covering pre-employment requirements, orientation, safety training, and integration into the team.",
+    html: `<h1>New Hire Onboarding</h1><h3>1. Purpose</h3><p>Provide a consistent onboarding experience for every new employee. Effective onboarding improves retention, accelerates time-to-productivity, ensures regulatory compliance, and establishes a positive foundation for the employee's career with the company.</p><h3>2. Scope</h3><p>This procedure applies to all new hires including full-time, part-time, and temporary employees across all departments and job classifications.</p><h3>3. Procedure</h3><ol><li><strong>HR sends offer letter and pre-employment paperwork.</strong> Upon acceptance of the verbal offer, HR sends the formal offer letter along with pre-employment forms including W-4, I-9, direct deposit authorization, emergency contact information, and benefit enrollment forms.</li><li><strong>Complete background check and drug screening.</strong> All new hires must pass a background check and drug screening before their start date. Results are reviewed by HR and any concerns are escalated to the hiring manager and HR Director.</li><li><strong>Schedule Day 1 orientation.</strong> Coordinate the first-day orientation including: company safety training, employee handbook review, IT system setup and credentials, facility tour, introduction to key team members, and issuance of company ID and PPE.</li><li><strong>Assign buddy or mentor from the employee's department.</strong> Designate an experienced team member as a buddy/mentor to help the new hire navigate their first 90 days. The buddy provides informal guidance on company culture, processes, and day-to-day operations.</li><li><strong>Complete required OSHA and company safety certifications within 30 days.</strong> All field employees must complete OSHA 10 or OSHA 30 (as applicable) and all company-specific safety certifications within their first 30 days of employment.</li><li><strong>30-day check-in with HR and supervisor.</strong> HR and the employee's supervisor conduct a formal 30-day check-in to review progress, address any concerns, confirm training completion, and ensure the new hire is integrating successfully.</li></ol>`
+  },
+  {
+    id: 6,
+    dept: "Human Resources",
+    name: "Incident Reporting",
+    owner: "Human Resources Dept.",
+    ref: "SOP-HR-002",
+    revised: "2026-01-10",
+    desc: "Procedure for reporting, documenting, and investigating workplace injuries, near-miss incidents, and safety concerns to ensure compliance and prevent recurrence.",
+    html: `<h1>Incident Reporting</h1><h3>1. Purpose</h3><p>Ensure all workplace incidents are reported, documented, and investigated promptly. Thorough incident reporting protects employees, ensures regulatory compliance, identifies root causes, and drives continuous improvement in workplace safety.</p><h3>2. Scope</h3><p>This procedure applies to all workplace incidents including injuries, illnesses, near-misses, property damage, and environmental releases occurring on any company jobsite or facility.</p><h3>3. Procedure</h3><ol><li><strong>Secure the scene and provide first aid or call emergency services.</strong> The first priority is always the safety of the injured person and others in the area. Secure the scene to prevent additional injuries, administer first aid if trained to do so, and call 911 for serious injuries.</li><li><strong>Notify supervisor immediately.</strong> The employee or witness must notify their direct supervisor as soon as the scene is safe. The supervisor is responsible for ensuring medical care is provided and initiating the reporting process.</li><li><strong>Complete Incident Report Form within 24 hours.</strong> The supervisor completes the detailed Incident Report Form within 24 hours, including: date, time, location, persons involved, witnesses, description of events, injury details, and any immediate corrective actions taken.</li><li><strong>Submit form to HR and Safety Director.</strong> The completed Incident Report is submitted to both the HR department and the Safety Director for review and tracking. Serious incidents must be reported to the Safety Director immediately by phone, not just in writing.</li><li><strong>Investigation conducted within 48 hours.</strong> The Safety Director leads a formal investigation within 48 hours of the incident. The investigation includes interviews with involved parties and witnesses, scene documentation, root cause analysis, and identification of contributing factors.</li><li><strong>Corrective actions documented and implemented.</strong> Based on the investigation findings, develop and implement corrective actions to prevent recurrence. Document all corrective actions with responsible parties and target completion dates. Follow up to verify implementation.</li><li><strong>File OSHA reports if applicable.</strong> Determine if the incident meets OSHA reporting thresholds (fatality, hospitalization, amputation, or loss of eye). If so, file the required OSHA report within the mandated timeframe. Maintain all records per OSHA recordkeeping requirements.</li></ol>`
+  },
+  {
+    id: 7,
+    dept: "Executive",
+    name: "Annual Strategic Planning",
+    owner: "Executive Team",
+    ref: "SOP-EX-001",
+    revised: "2025-12-15",
+    desc: "Process for conducting the annual strategic planning cycle including performance review, goal-setting, budget allocation, and company-wide communication.",
+    html: `<h1>Annual Strategic Planning</h1><h3>1. Purpose</h3><p>Establish the company's strategic direction and annual goals through a structured planning process. Strategic planning aligns all departments toward common objectives, ensures resources are allocated effectively, and provides a framework for measuring organizational performance.</p><h3>2. Scope</h3><p>This procedure applies to the annual planning cycle and involves the Executive Team, Department Heads, and key stakeholders across all business units.</p><h3>3. Procedure</h3><ol><li><strong>CEO initiates planning cycle in Q4.</strong> The CEO formally launches the annual strategic planning cycle in the fourth quarter by distributing the planning timeline, data requirements, and expectations to all Department Heads. Prior year goals and KPIs are compiled for review.</li><li><strong>Department heads submit performance reviews and projections.</strong> Each Department Head prepares and submits a comprehensive review of their department's performance against current year goals, along with projections and strategic recommendations for the coming year.</li><li><strong>Executive team conducts 2-day offsite planning session.</strong> The Executive Team convenes for a structured two-day offsite session to review company performance, analyze market conditions, assess competitive position, and develop strategic priorities for the coming year.</li><li><strong>Define company-wide goals, KPIs, and budget allocations.</strong> Based on the strategic planning session, finalize the company's annual goals, key performance indicators, and departmental budget allocations. Ensure goals are specific, measurable, and aligned with the long-term vision.</li><li><strong>Communicate plan to all employees within 30 days.</strong> The approved strategic plan is communicated to all employees through a company-wide meeting, followed by departmental meetings where managers translate company goals into team-specific objectives and action plans.</li><li><strong>Quarterly reviews to track progress against goals.</strong> The Executive Team conducts quarterly business reviews to assess progress against strategic goals, identify emerging risks or opportunities, and make necessary adjustments to keep the organization on track.</li></ol>`
+  },
+  {
+    id: 8,
+    dept: "Executive",
+    name: "Policy Revision & Approval",
+    owner: "Executive Team",
+    ref: "SOP-EX-002",
+    revised: "2026-02-20",
+    desc: "Procedure for proposing, reviewing, approving, and distributing changes to company-wide policies in a controlled and documented manner.",
+    html: `<h1>Policy Revision &amp; Approval</h1><h3>1. Purpose</h3><p>Ensure all company policies are reviewed, approved, and distributed in a controlled manner. A formal policy management process maintains consistency, ensures legal compliance, and provides clear documentation of all policy changes and their effective dates.</p><h3>2. Scope</h3><p>This procedure applies to all company-wide policies including HR policies, safety policies, operational procedures, and financial policies. Department-specific procedures may follow a simplified version of this process with Department Head approval.</p><h3>3. Procedure</h3><ol><li><strong>Policy change proposed via Policy Revision Request form.</strong> Any employee may propose a policy change by completing the Policy Revision Request form, which includes the current policy reference, proposed changes, rationale for the change, and expected impact assessment.</li><li><strong>Legal and compliance review.</strong> If the proposed change affects regulatory compliance, employment law, safety regulations, or contractual obligations, the proposal is routed to legal counsel for review and guidance before proceeding.</li><li><strong>Executive committee review and vote.</strong> The Executive Committee reviews the proposed policy change, considers the legal review findings, and votes on approval. A majority vote is required for adoption. Discussion points and the vote outcome are recorded in the meeting minutes.</li><li><strong>Approved policies updated in the company handbook.</strong> Upon approval, the policy is updated in the official company handbook with the new effective date, revision number, and summary of changes. The previous version is archived for reference.</li><li><strong>All employees notified and acknowledge receipt.</strong> HR distributes the updated policy to all affected employees via email and the company intranet. Employees are required to acknowledge receipt and review of the updated policy within 14 days.</li><li><strong>Old versions archived with revision history.</strong> All superseded policy versions are archived with a complete revision history documenting what changed, when it changed, who approved it, and the business rationale. Archives are maintained for a minimum of 7 years.</li></ol>`
+  },
+  {
+    id: 9,
+    dept: "Estimating",
+    name: "Bid Preparation Process",
+    owner: "Estimating Dept.",
+    ref: "SOP-ES-001",
+    revised: "2026-01-25",
+    desc: "Standard procedure for preparing, reviewing, and submitting competitive and accurate project bids from invitation through final submission.",
+    html: `<h1>Bid Preparation Process</h1><h3>1. Purpose</h3><p>Standardize the bid preparation process to ensure accurate, competitive, and timely proposals. A consistent estimating process reduces errors, improves win rates, and ensures that all bids accurately reflect project costs and company margin requirements.</p><h3>2. Scope</h3><p>This procedure applies to all project bids including public works, private negotiated, and design-build proposals. The level of detail and review requirements may vary based on project value and complexity.</p><h3>3. Procedure</h3><ol><li><strong>Receive bid invitation and log in bid tracking system.</strong> When a bid invitation or RFP is received, log it immediately in the bid tracking system with key details: project name, owner, architect, bid date, estimated value, and assigned estimator. Evaluate bid/no-bid criteria.</li><li><strong>Conduct plan review and site visit within 3 days.</strong> The assigned estimator performs a thorough review of the plans and specifications. Schedule and complete a site visit within 3 business days to assess existing conditions, access, logistics, and any site-specific factors that may impact the estimate.</li><li><strong>Complete quantity takeoff using estimating software.</strong> Perform detailed quantity takeoffs for all self-performed work using the company's estimating software. Verify quantities against the plans and document any discrepancies or ambiguities for RFI submission.</li><li><strong>Request subcontractor and material quotes.</strong> Distribute bid packages to qualified subcontractors and material suppliers. Allow adequate time for pricing. Follow up on outstanding quotes and ensure a minimum of three competitive bids per trade where possible.</li><li><strong>Build estimate with labor, materials, equipment, overhead, and profit.</strong> Compile the complete estimate including: self-performed labor with current crew rates, materials with verified pricing, equipment costs, general conditions, general requirements, insurance, bonding, overhead, and profit per company margin guidelines.</li><li><strong>Senior Estimator reviews and approves final numbers.</strong> The Senior Estimator or Chief Estimator performs a comprehensive review of the estimate including scope coverage, pricing accuracy, subcontractor selection, risk factors, and overall competitiveness. Final markup and strategy are confirmed.</li><li><strong>Submit bid before deadline with required bonds and documents.</strong> Prepare the final bid package including all required forms, bid bond, licenses, certifications, and supporting documents. Submit before the deadline with confirmation of receipt. Log the final bid amount in the tracking system.</li></ol>`
+  },
+  {
+    id: 10,
+    dept: "Estimating",
+    name: "Cost Database Maintenance",
+    owner: "Estimating Dept.",
+    ref: "SOP-ES-002",
+    revised: "2026-03-05",
+    desc: "Procedure for regularly reviewing, updating, and maintaining the company's unit cost database to ensure estimates reflect current market conditions.",
+    html: `<h1>Cost Database Maintenance</h1><h3>1. Purpose</h3><p>Keep the estimating cost database accurate and reflective of current market conditions. An up-to-date cost database is the foundation of accurate estimating. Regular maintenance ensures that bids are competitive and profitable by reflecting actual field costs and current market pricing.</p><h3>2. Scope</h3><p>This procedure applies to the company's master cost database used by all estimators. It covers labor rates, material costs, equipment rates, subcontractor pricing, and productivity factors.</p><h3>3. Procedure</h3><ol><li><strong>Review cost database quarterly against actual project costs.</strong> Each quarter, compare estimated costs against actual costs from completed and in-progress projects. The Estimating team coordinates with Project Managers and Accounting to obtain accurate job cost reports.</li><li><strong>Update unit costs for labor, materials, and equipment.</strong> Based on the quarterly review and current market intelligence, update unit costs across all categories. Labor rates should reflect current union scales or prevailing wages, material costs should reflect current supplier pricing, and equipment rates should match current rental market rates.</li><li><strong>Document sources for all cost updates.</strong> Every cost update must be documented with the source of the new pricing: supplier quote, subcontractor bid, job cost report, published index, or market survey. This documentation supports estimate defensibility and audit requirements.</li><li><strong>Flag items with variance greater than 10% for review.</strong> Any cost item showing a variance greater than 10% from the previous quarter is flagged for additional review by the Senior Estimator. Significant variances may indicate market shifts, data entry errors, or project-specific anomalies that should not be applied broadly.</li><li><strong>Archive previous cost data for historical reference.</strong> Before applying updates, archive the current database version with a date stamp. Historical cost data is valuable for trend analysis, dispute resolution, and understanding cost escalation patterns over time.</li><li><strong>Distribute updated database to all estimators.</strong> Once updates are reviewed and approved by the Senior Estimator, distribute the updated database to all estimating staff. Conduct a brief review meeting to highlight significant changes and discuss market trends affecting pricing.</li></ol>`
+  }
+];
+
+// ── DEPT CONFIG ──────────────────────────────────────────────────────────
+const DEPT_CLASS = {
+  'Project Management': 'pm',
+  'Accounting':         'ac',
+  'Human Resources':    'hr',
+  'Executive':          'ex',
+  'Estimating':         'es',
+};
+function deptClass(dept) { return DEPT_CLASS[dept] || 'ex'; }
+function deptColor(dept) {
+  const map = { pm:'#b8860b', ac:'#8b4a4a', hr:'#4a7c59', ex:'#5a6a8a', es:'#7c5aaa' };
+  return map[deptClass(dept)] || '#888';
 }
 
-// ── VIEWS ──
-function showHome() {
-    setActiveNav('home');
-    const total = departments.reduce((s, d) => s + d.sops.length, 0);
-    document.getElementById('main-content').innerHTML = `
-        <div class="header-row page-header">
-            <div>
-                <div class="breadcrumb">Home</div>
-                <h1>Dashboard</h1>
-                <p class="page-desc">Overview of all standard operating procedures by department.</p>
+// ── STATE ────────────────────────────────────────────────────────────────
+let activeId = null;
+let searchTerm = '';
+let favorites = new Set();
+const FAV_KEY = 'sop-organizer-favorites';
+
+function loadFavs() {
+  try { favorites = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); }
+  catch(e) { favorites = new Set(); }
+}
+function saveFavs() { localStorage.setItem(FAV_KEY, JSON.stringify([...favorites])); }
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+function renderAll() { renderFavs(); renderTree(); }
+
+// ── FAVORITES PANEL ──────────────────────────────────────────────────────
+function renderFavs() {
+  const section = document.getElementById('favSection');
+  const list = document.getElementById('favList');
+  const favDocs = DOCS_DATA.filter(d => favorites.has(d.id));
+  section.classList.toggle('empty', favDocs.length === 0);
+  list.innerHTML = favDocs.map(d => `
+    <div class="fav-row ${d.id===activeId?'active':''}" onclick="openDoc(${d.id})">
+      <div class="fav-dept-pip" style="background:${deptColor(d.dept)}"></div>
+      <span class="fav-name">${d.name}</span>
+      <button class="fav-unstar" onclick="toggleFav(event,${d.id})" title="Remove from favorites">&starf;</button>
+    </div>`).join('');
+}
+
+function toggleFav(e, id) {
+  e.stopPropagation();
+  if (favorites.has(id)) favorites.delete(id);
+  else favorites.add(id);
+  saveFavs();
+  renderAll();
+  updateHeaderStar(id);
+}
+
+// ── TREE ─────────────────────────────────────────────────────────────────
+function grouped(docs) {
+  const g = {};
+  for (const d of docs) { if (!g[d.dept]) g[d.dept] = []; g[d.dept].push(d); }
+  return g;
+}
+
+function renderTree() {
+  const term = searchTerm.toLowerCase();
+  const filtered = term
+    ? DOCS_DATA.filter(d =>
+        d.name.toLowerCase().includes(term) ||
+        d.dept.toLowerCase().includes(term) ||
+        d.desc.toLowerCase().includes(term) ||
+        d.html.toLowerCase().includes(term)
+      )
+    : DOCS_DATA;
+
+  document.getElementById('docCountLabel').textContent =
+    term ? `${filtered.length} of ${DOCS_DATA.length} docs` : `${DOCS_DATA.length} documents`;
+
+  const deptOrder = ['Project Management','Accounting','Human Resources','Executive','Estimating'];
+  const depts = grouped(filtered);
+  const names = deptOrder.filter(d => depts[d]);
+  const tree = document.getElementById('tree');
+
+  tree.innerHTML = names.map(dept => {
+    const cls = deptClass(dept);
+    const items = depts[dept];
+    const hasActive = items.some(d => d.id === activeId);
+    const open = hasActive || !!term;
+    return `<div class="dept-block">
+      <div class="dept-row ${open?'open':''}" onclick="toggleDept(this)">
+        <div class="dept-pip pip-${cls}"></div>
+        <span class="dept-name">${dept}</span>
+        <span class="dept-badge">${items.length}</span>
+        <span class="dept-arrow">&#9654;</span>
+      </div>
+      <div class="doc-list ${open?'open':''}">
+        ${items.map(d => `
+          <div class="doc-row ${d.id===activeId?'active':''}" onclick="openDoc(${d.id})">
+            <div class="doc-row-left">
+              <span class="doc-name">${term ? highlight(d.name, term) : d.name}</span>
             </div>
-            <div class="search-bar">
-                ${icons.search}
-                <input type="text" placeholder="Search all SOPs..." oninput="globalSearch(this.value)">
-            </div>
-        </div>
-        <div class="stats-row">
-            <div class="stat-chip"><span class="stat-num">${departments.length}</span> Departments</div>
-            <div class="stat-chip"><span class="stat-num">${total}</span> Total SOPs</div>
-        </div>
-        <div class="dept-grid">
-            ${departments.map(d => `
-                <div class="dept-card ${deptClasses[d.id] || ''}" onclick="showDepartment('${d.id}')">
-                    <div class="card-icon-wrap">${icons[d.id]}</div>
-                    <h3>${d.name}</h3>
-                    <p>${d.description}</p>
-                    <div class="card-footer">
-                        <span class="sop-count">${d.sops.length} procedures</span>
-                        <span class="card-arrow">${icons.arrowRight}</span>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-        <div id="search-results"></div>
-    `;
+            <button class="star-btn ${favorites.has(d.id)?'starred':''}"
+              onclick="toggleFav(event,${d.id})"
+              title="${favorites.has(d.id)?'Remove from favorites':'Add to favorites'}"
+            >${favorites.has(d.id)?'&starf;':'&star;'}</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function showDepartment(deptId) {
-    setActiveNav(deptId);
-    const dept = departments.find(d => d.id === deptId);
-    if (!dept) return;
-    document.getElementById('main-content').innerHTML = `
-        <div class="page-header">
-            <div class="breadcrumb"><a onclick="showHome()">Home</a> <span class="sep">/</span> ${dept.name}</div>
-            <h1>${dept.name}</h1>
-            <p class="page-desc">${dept.description}</p>
-        </div>
-        <div class="sop-list">
-            ${dept.sops.length ? dept.sops.map(s => `
-                <div class="sop-item" onclick="showSOP('${dept.id}','${s.id}')">
-                    <div class="sop-dot"></div>
-                    <div class="sop-info">
-                        <h4>${s.title}</h4>
-                        <p>${s.summary}</p>
-                    </div>
-                    <div class="sop-meta">Revised ${s.revised}</div>
-                </div>
-            `).join('') : `
-                <div class="empty-state">
-                    <div class="empty-icon-wrap">${icons.folder}</div>
-                    <p>No SOPs have been added to this department yet.</p>
-                </div>
-            `}
-        </div>
-    `;
+function toggleDept(row) {
+  row.classList.toggle('open');
+  row.nextElementSibling.classList.toggle('open');
 }
 
-function showSOP(deptId, sopId) {
-    const dept = departments.find(d => d.id === deptId);
-    const sop = dept.sops.find(s => s.id === sopId);
-    if (!sop) return;
-    document.getElementById('main-content').innerHTML = `
-        <div class="back-btn" onclick="showDepartment('${deptId}')">${icons.arrowLeft} Back to ${dept.name}</div>
-        <div class="sop-detail">
-            <h2>${sop.title}</h2>
-            <div class="meta-row">
-                <span class="meta-item">${icons.calendar} Revised: ${sop.revised}</span>
-                <span class="meta-item">${icons.user} Author: ${sop.author}</span>
-                <span class="meta-item">${icons.building} ${dept.name}</span>
-            </div>
-            <div class="sop-body">${sop.body}</div>
-        </div>
-    `;
+function highlight(text, term) {
+  if (!term) return text;
+  const re = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return text.replace(re, '<mark>$1</mark>');
 }
 
-function globalSearch(query) {
-    const results = document.getElementById('search-results');
-    if (!results) return;
-    if (!query.trim()) { results.innerHTML = ''; return; }
-    const q = query.toLowerCase();
-    let matches = [];
-    departments.forEach(d => {
-        d.sops.forEach(s => {
-            if (s.title.toLowerCase().includes(q) || s.summary.toLowerCase().includes(q))
-                matches.push({ dept: d, sop: s });
-        });
-    });
-    if (!matches.length) {
-        results.innerHTML = '<div class="empty-state" style="padding:30px;"><p>No SOPs match your search.</p></div>';
-    } else {
-        results.innerHTML = `
-            <p style="margin:24px 0 12px;font-size:.82rem;color:var(--text-muted);font-weight:500;">${matches.length} result(s)</p>
-            <div class="sop-list">${matches.map(m => `
-                <div class="sop-item" onclick="showSOP('${m.dept.id}','${m.sop.id}')">
-                    <div class="sop-dot"></div>
-                    <div class="sop-info">
-                        <h4>${m.sop.title}</h4>
-                        <p>${m.dept.name} — ${m.sop.summary}</p>
-                    </div>
-                </div>
-            `).join('')}</div>
-        `;
-    }
+// ── OPEN DOC ─────────────────────────────────────────────────────────────
+function openDoc(id) {
+  activeId = id;
+  const doc = DOCS_DATA.find(d => d.id === id);
+  if (!doc) return;
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('docPane').classList.add('active');
+
+  document.getElementById('crumbDept').textContent = doc.dept;
+  document.getElementById('crumbName').textContent = doc.name;
+  document.getElementById('docTitle').textContent = doc.name;
+
+  const tag = document.getElementById('deptTag');
+  tag.textContent = doc.dept;
+  tag.className = 'dept-tag tag-' + deptClass(doc.dept);
+
+  document.getElementById('metaDept').textContent = doc.dept;
+  document.getElementById('metaRef').textContent = doc.ref || '—';
+  document.getElementById('metaOwner').textContent = doc.owner || '—';
+  document.getElementById('metaRevised').textContent = doc.revised || '—';
+  document.getElementById('docDesc').textContent = doc.desc || '';
+
+  updateHeaderStar(doc.id);
+
+  document.getElementById('docContent').innerHTML = doc.html;
+  document.getElementById('docContent').closest('.doc-body').scrollTop = 0;
+
+  renderAll();
 }
+
+// ── HEADER STAR ──────────────────────────────────────────────────────────
+function updateHeaderStar(id) {
+  const existing = document.getElementById('headerStar');
+  if (existing) existing.remove();
+  if (!id) return;
+  const titleRow = document.querySelector('.doc-title-row');
+  const btn = document.createElement('button');
+  btn.id = 'headerStar';
+  const isFav = favorites.has(id);
+  btn.title = isFav ? 'Remove from favorites' : 'Add to favorites';
+  btn.style.cssText = `background:none;border:none;cursor:pointer;font-size:1.4rem;color:${isFav?'#d4a017':'#c8c0b0'};padding:2px 4px;transition:color 0.15s,transform 0.15s;flex-shrink:0;margin-top:2px;line-height:1;align-self:flex-start`;
+  btn.textContent = isFav ? '★' : '☆';
+  btn.onmouseenter = () => { btn.style.transform='scale(1.2)'; if(!favorites.has(id)) btn.style.color='#d4a017'; };
+  btn.onmouseleave = () => { btn.style.transform=''; if(!favorites.has(id)) btn.style.color='#c8c0b0'; };
+  btn.onclick = (e) => { toggleFav(e, id); };
+  titleRow.insertBefore(btn, document.getElementById('deptTag'));
+}
+
+// ── SEARCH ───────────────────────────────────────────────────────────────
+function onSearch() {
+  searchTerm = document.getElementById('searchInput').value.trim();
+  renderTree();
+}
+
+// ── RESIZE SIDEBAR ───────────────────────────────────────────────────────
+const handle = document.getElementById('resizeHandle');
+const sidebar = document.getElementById('sidebar');
+let drag=false, sx, sw;
+handle.addEventListener('mousedown', e => { drag=true; sx=e.clientX; sw=sidebar.offsetWidth; document.body.style.cssText='cursor:col-resize;user-select:none'; });
+document.addEventListener('mousemove', e => { if (!drag) return; sidebar.style.width = Math.max(160, Math.min(420, sw+e.clientX-sx))+'px'; });
+document.addEventListener('mouseup', () => { drag=false; document.body.style.cssText=''; });
 </script>
 </body>
 </html>
