@@ -31,11 +31,12 @@
   --muted:#7a7060;
   --border:#ddd8ce;
   --rule:#e8e3da;
-  --dept-pm:#b8860b;
+  --dept-op:#b8860b;
   --dept-ac:#8b4a4a;
   --dept-hr:#4a7c59;
   --dept-ex:#5a6a8a;
   --dept-es:#7c5aaa;
+  --dept-ge:#6a8a5a;
 }
 
 body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -153,6 +154,8 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .doc-actions button{padding:5px 12px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:all 0.15s}
 .doc-actions .move-btn{background:none;border:1px solid var(--border);color:var(--muted)}
 .doc-actions .move-btn:hover{border-color:var(--accent);color:var(--accent)}
+.doc-actions .rename-btn{background:none;border:1px solid var(--border);color:var(--muted)}
+.doc-actions .rename-btn:hover{border-color:var(--accent2);color:var(--accent2)}
 .doc-actions .delete-btn{background:none;border:1px solid var(--border);color:var(--muted)}
 .doc-actions .delete-btn:hover{border-color:#c0392b;color:#c0392b}
 
@@ -206,11 +209,12 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .img-viewer img{max-width:100%;height:auto;border:1px solid var(--border);border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
 
 /* ── DEPT COLORS ── */
-.pip-pm,.tag-pm{background:var(--dept-pm)}
+.pip-op,.tag-op{background:var(--dept-op)}
 .pip-ac,.tag-ac{background:var(--dept-ac)}
 .pip-hr,.tag-hr{background:var(--dept-hr)}
 .pip-ex,.tag-ex{background:var(--dept-ex)}
 .pip-es,.tag-es{background:var(--dept-es)}
+.pip-ge,.tag-ge{background:var(--dept-ge)}
 
 /* ── PRINT ── */
 @media print{
@@ -413,6 +417,7 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
           <div class="meta-item"><div class="ml">Revised</div><div class="mv" id="metaRevised">&mdash;</div></div>
         </div>
         <div class="doc-actions" id="docActions" style="display:none">
+          <button class="rename-btn" onclick="showRenameModal()">Rename</button>
           <button class="move-btn" onclick="showMoveModal()">Move Department</button>
           <button class="delete-btn" onclick="deleteCurrentDoc()">Delete Document</button>
         </div>
@@ -463,7 +468,8 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
     <div class="modal-sub">Select the new department for this document.</div>
     <label for="moveDept">New Department</label>
     <select id="moveDept">
-      <option value="Project Management">Project Management</option>
+      <option value="General">General</option>
+      <option value="Operations">Operations</option>
       <option value="Accounting">Accounting</option>
       <option value="Human Resources">Human Resources</option>
       <option value="Executive">Executive</option>
@@ -472,6 +478,20 @@ mark{background:#fff0a0;border-radius:2px;padding:0 2px}
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeMoveModal()">Cancel</button>
       <button class="btn-save" id="moveSaveBtn" onclick="doMoveDoc()">Move</button>
+    </div>
+  </div>
+</div>
+
+<!-- RENAME MODAL -->
+<div class="modal-overlay" id="renameModal">
+  <div class="modal">
+    <h3>Rename Document</h3>
+    <div class="modal-sub">Enter a new name for this document.</div>
+    <label for="renameInput">Document Name</label>
+    <input type="text" id="renameInput" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;background:var(--surface);color:var(--text)">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeRenameModal()">Cancel</button>
+      <button class="btn-save" id="renameSaveBtn" onclick="doRenameDoc()">Save</button>
     </div>
   </div>
 </div>
@@ -511,7 +531,7 @@ const auth = firebase.auth();
 const firestore = firebase.firestore();
 
 const ADMIN_EMAILS = ['nathan@pcgoc.com', 'sergiojr@pcgoc.com'];
-const DEPT_LIST = ['Project Management','Accounting','Human Resources','Executive','Estimating'];
+const DEPT_LIST = ['General','Operations','Accounting','Human Resources','Executive','Estimating'];
 
 // ── CURRENT USER STATE ───────────────────────────────────────────────────
 let currentUser = null;
@@ -755,20 +775,22 @@ function getVisibleDocs() {
 
 // ── DEPT CONFIG ──────────────────────────────────────────────────────────
 const DEPT_CLASS = {
-  'Project Management': 'pm',
-  'Accounting':         'ac',
-  'Human Resources':    'hr',
-  'Executive':          'ex',
-  'Estimating':         'es',
+  'General':          'ge',
+  'Operations':       'op',
+  'Accounting':       'ac',
+  'Human Resources':  'hr',
+  'Executive':        'ex',
+  'Estimating':       'es',
 };
 function deptClass(dept) { return DEPT_CLASS[dept] || 'ex'; }
 function deptColor(dept) {
-  const map = { pm:'#b8860b', ac:'#8b4a4a', hr:'#4a7c59', ex:'#5a6a8a', es:'#7c5aaa' };
+  const map = { ge:'#6a8a5a', op:'#b8860b', ac:'#8b4a4a', hr:'#4a7c59', ex:'#5a6a8a', es:'#7c5aaa' };
   return map[deptClass(dept)] || '#888';
 }
 
 const DEPT_ICONS = {
-  'Project Management': '<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+  'General': '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  'Operations': '<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
   'Accounting': '<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
   'Human Resources': '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   'Executive': '<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
@@ -1245,6 +1267,41 @@ async function doMoveDoc() {
   }
   btn.disabled = false;
   btn.textContent = 'Move';
+}
+
+// ── RENAME DOC ──────────────────────────────────────────────────────────
+function showRenameModal() {
+  if (!activeId) return;
+  const doc = allDocs.find(d => d.id === activeId);
+  if (!doc) return;
+  document.getElementById('renameInput').value = doc.name;
+  document.getElementById('renameModal').classList.add('active');
+  setTimeout(() => document.getElementById('renameInput').select(), 50);
+}
+
+function closeRenameModal() {
+  document.getElementById('renameModal').classList.remove('active');
+}
+
+async function doRenameDoc() {
+  if (!activeId) return;
+  const newName = document.getElementById('renameInput').value.trim();
+  if (!newName) { alert('Name cannot be empty.'); return; }
+  const btn = document.getElementById('renameSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    await firestore.collection('documents').doc(activeId).update({ name: newName });
+    const doc = allDocs.find(d => d.id === activeId);
+    if (doc) doc.name = newName;
+    closeRenameModal();
+    openDoc(activeId);
+  } catch(err) {
+    alert('Rename failed: ' + err.message);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Save';
 }
 
 // ── ADMIN CONSOLE ───────────────────────────────────────────────────────
